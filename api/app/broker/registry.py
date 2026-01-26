@@ -25,3 +25,7 @@ class AgentRegistry(ABC):
     @abstractmethod
     async def search_agents(self, query: str, limit: int = 10) -> list[Agent]:
         """Search for agents."""
+
+    @abstractmethod
+    async def close(self) -> None:
+        """Close the registry and release resources."""

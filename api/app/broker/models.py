@@ -17,7 +17,8 @@ class EmbeddingModel(BaseModel):
 
     @classmethod
     def create(cls, model_id: str | None = None) -> EmbeddingModel:
-        dimension = MODEL_ID_TO_DIMENSION.get(model_id, DEFAULT_EMBEDDING_MODEL)
+        model_id = model_id or DEFAULT_EMBEDDING_MODEL
+        dimension = MODEL_ID_TO_DIMENSION.get(model_id)
         if dimension is None:
             raise ValueError(f"Unknown embedding model id: {model_id}")
 

@@ -22,3 +22,7 @@ class RuntimeManager(ABC):
     @abstractmethod
     def get_agent_status(self, agent_id: str) -> AgentStatus:
         """Get the status of an agent runtime."""
+
+    @abstractmethod
+    def close(self) -> None:
+        """Close the runtime manager and release resources."""
