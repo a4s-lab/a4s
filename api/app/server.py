@@ -105,7 +105,7 @@ async def skill_registry_error_handler(_request: Request, exc: skills_exc.SkillR
 async def mcp_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
     registry = QdrantAgentRegistry(
         url=config.qdrant_url,
-        collection_name=config.qdrant_collection_name,
+        collection_name=config.registry_qdrant_collection,
     )
     runtime_manager = DockerRuntimeManager()
     skills_registry = await SqliteSkillsRegistry.create(config.skills_db_path)
