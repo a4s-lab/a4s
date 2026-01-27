@@ -264,13 +264,20 @@ class SqliteSkillsRegistry(SkillsRegistry):
             rows = await cursor.fetchall()
         return [self._row_to_skill_file(row) for row in rows]
 
-    async def list_skills(self) -> list[Skill]:
-        """List all registered skills.
+    async def list_skills(self, offset: int = 0, limit: int = 50) -> list[Skill]:
+        """List skills with pagination.
+
+        Args:
+            offset: Number of skills to skip.
+            limit: Maximum number of skills to return.
 
         Returns:
-            List of all skills in the registry.
+            List of skills starting from offset.
         """
-        async with self._db.execute("SELECT * FROM skill ORDER BY name") as cursor:
+        async with self._db.execute(
+            "SELECT * FROM skill ORDER BY name LIMIT ? OFFSET ?",
+            (limit, offset),
+        ) as cursor:
             rows = await cursor.fetchall()
         return [self._row_to_skill(row) for row in rows]
 
@@ -340,23 +347,6 @@ class SqliteSkillsRegistry(SkillsRegistry):
             logger.error("File %s not found for skill %s", path, skill_id)
             raise SkillNotFoundError(f"File '{path}' not found for skill {skill_id}")
         return self._row_to_skill_file(row)
-
-    async def list_skills_paginated(self, offset: int = 0, limit: int = 50) -> list[Skill]:
-        """List skills with pagination.
-
-        Args:
-            offset: Number of skills to skip.
-            limit: Maximum number of skills to return.
-
-        Returns:
-            List of skills starting from offset.
-        """
-        async with self._db.execute(
-            "SELECT * FROM skill ORDER BY name LIMIT ? OFFSET ?",
-            (limit, offset),
-        ) as cursor:
-            rows = await cursor.fetchall()
-        return [self._row_to_skill(row) for row in rows]
 
     async def close(self) -> None:
         """Close the database connection."""

@@ -58,11 +58,15 @@ class SkillsRegistry(ABC):
         """
 
     @abstractmethod
-    async def list_skills(self) -> list[Skill]:
-        """List all registered skills.
+    async def list_skills(self, offset: int = 0, limit: int = 50) -> list[Skill]:
+        """List skills with pagination.
+
+        Args:
+            offset: Number of skills to skip.
+            limit: Maximum number of skills to return.
 
         Returns:
-            List of all skills in the registry.
+            List of skills starting from offset.
         """
 
     @abstractmethod
@@ -104,18 +108,6 @@ class SkillsRegistry(ABC):
 
         Raises:
             SkillNotFoundError: If the skill or file does not exist.
-        """
-
-    @abstractmethod
-    async def list_skills_paginated(self, offset: int = 0, limit: int = 50) -> list[Skill]:
-        """List skills with pagination.
-
-        Args:
-            offset: Number of skills to skip.
-            limit: Maximum number of skills to return.
-
-        Returns:
-            List of skills starting from offset.
         """
 
     @abstractmethod

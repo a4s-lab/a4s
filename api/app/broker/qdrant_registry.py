@@ -142,26 +142,24 @@ class QdrantAgentRegistry(AgentRegistry):
             raise AgentNotRegisteredError(f"Agent {agent_id} not found")
         return self._payload_to_agent(results[0].payload)
 
-    async def list_agents(self) -> list[Agent]:
-        """List all registered agents.
+    async def list_agents(self, offset: int = 0, limit: int = 50) -> list[Agent]:
+        """List agents with pagination.
+
+        Args:
+            offset: Number of agents to skip.
+            limit: Maximum number of agents to return.
 
         Returns:
-            List of all agents in the registry.
+            List of agents starting from offset.
         """
         await self._ensure_collection()
-        agents = []
-        offset = None
-        while True:
-            records, offset = await self._client.scroll(
-                collection_name=self._collection_name,
-                limit=100,
-                offset=offset,
-                with_payload=True,
-            )
-            agents.extend(self._payload_to_agent(r.payload) for r in records)
-            if offset is None:
-                break
-        return agents
+        records, _ = await self._client.scroll(
+            collection_name=self._collection_name,
+            limit=limit,
+            offset=offset,
+            with_payload=True,
+        )
+        return [self._payload_to_agent(r.payload) for r in records]
 
     async def search_agents(self, query: str, limit: int = 10) -> list[Agent]:
         """Search for agents using semantic search.

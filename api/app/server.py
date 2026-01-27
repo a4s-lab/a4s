@@ -123,101 +123,107 @@ mcp = FastMCP("A4S MCP Server", lifespan=mcp_lifespan)
 
 @mcp.tool()
 async def search_agents(
-    query: str,
     ctx: Context[ServerSession, AppContext],
+    query: str,
     limit: int = 10,
-) -> list[dict]:
-    """Search for agents using semantic search.
+) -> dict:
+    """Search for agents by name/description.
+
+    When to use:
+    - Find agents by capability (query="code review")
 
     Args:
-        query: The search query text to find relevant agents.
-        limit: Maximum number of results to return.
+        query: Search query.
+        limit: Max results to return (default 10).
 
     Returns:
-        List of agents matching the query.
+        {agents, query}
     """
     registry = ctx.request_context.lifespan_context.registry
+
     agents = await registry.search_agents(query, limit)
-    return [
-        {
-            "id": str(agent.id),
-            "name": agent.name,
-            "description": agent.description,
-            "url": agent.url,
-            "port": agent.port,
-            "status": agent.status.value,
-        }
-        for agent in agents
-    ]
+
+    return {
+        "agents": [
+            {
+                "id": str(agent.id),
+                "name": agent.name,
+                "description": agent.description,
+                "url": agent.url,
+                "port": agent.port,
+                "status": agent.status.value,
+            }
+            for agent in agents
+        ],
+        "query": query,
+        "limit": limit,
+    }
 
 
 @mcp.tool()
 async def get_skills(
     names: list[str],
     ctx: Context[ServerSession, AppContext],
-) -> list[dict]:
-    """Get metadata for specific skills by name.
+) -> dict:
+    """Get metadata for specific skills by exact name.
+
+    When to use:
+    - Retrieve skills by name after search
+    - Verify skills exist before activation
+
+    When NOT to use:
+    - Don't know names - use search_skills
+    - Need instructions - read skill://{name}/instructions
 
     Args:
-        names: List of skill names to retrieve.
+        names: List of exact skill names to retrieve.
 
     Returns:
-        List of skill metadata for the requested names.
+        {found: [{name, description}], not_found: [names]}
     """
     skills_registry = ctx.request_context.lifespan_context.skills_registry
-    results = []
+    found = []
+    not_found = []
+
     for name in names:
         try:
             skill = await skills_registry.get_skill_by_name(name)
-            results.append({"name": skill.name, "description": skill.description})
+            found.append({"name": skill.name, "description": skill.description})
         except skills_exc.SkillNotFoundError:
-            results.append({"name": name, "error": f"Skill '{name}' not found"})
-    return results
+            not_found.append(name)
+
+    return {"found": found, "not_found": not_found}
 
 
 @mcp.tool()
 async def search_skills(
-    query: str,
     ctx: Context[ServerSession, AppContext],
-    limit: int = 5,
-) -> list[dict]:
-    """Search for skills using semantic search.
+    query: str,
+    limit: int = 10,
+) -> dict:
+    """Search for skills by name/description.
+
+    When to use:
+    - Find skills for a task (query="create PDF documents")
+
+    When NOT to use:
+    - Know exact skill names - use get_skills
+    - Need full instructions - read skill://{name}/instructions
 
     Args:
-        query: Natural language query to find relevant skills.
-        limit: Maximum number of results to return.
+        query: Search query.
+        limit: Max results to return (default 10).
 
     Returns:
-        List of skills matching the query, ordered by relevance.
+        {skills, query}
     """
     skills_registry = ctx.request_context.lifespan_context.skills_registry
     skills = await skills_registry.search_skills(query, limit)
-    return [{"name": skill.name, "description": skill.description} for skill in skills]
 
-
-@mcp.tool()
-async def list_skills(
-    ctx: Context[ServerSession, AppContext],
-    offset: int = 0,
-    limit: int = 50,
-) -> dict:
-    """List all available skills with pagination.
-
-    Args:
-        offset: Number of skills to skip.
-        limit: Maximum number of skills to return (max 100).
-
-    Returns:
-        Dictionary with skills list and pagination info.
-    """
-    limit = min(limit, 100)
-    skills_registry = ctx.request_context.lifespan_context.skills_registry
-    skills = await skills_registry.list_skills_paginated(offset, limit)
     return {
         "skills": [{"name": s.name, "description": s.description} for s in skills],
-        "offset": offset,
+        "query": query,
         "limit": limit,
-        "count": len(skills),
     }
 
 
@@ -271,7 +277,7 @@ async def activate_skill(
     try:
         skill = await skills_registry.get_skill_by_name(skill_name)
     except skills_exc.SkillNotFoundError:
-        return f"Error: Skill '{skill_name}' not found. Use search_skills or list_skills to find available skills."
+        return f"Error: Skill '{skill_name}' not found. Use search_skills to find available skills."
 
     parts = [f"# Skill: {skill.name}", "", "## Description", skill.description, ""]
 
@@ -310,7 +316,7 @@ async def discover_skills(
     if not skills:
         return (
             f"No skills found matching: {task_description}\n\n"
-            "Consider using list_skills to browse all available skills."
+            "Consider trying a broader search query with search_skills."
         )
 
     parts = [
