@@ -102,13 +102,19 @@ async def skill_registry_error_handler(_request: Request, exc: skills_exc.SkillR
 
 
 @asynccontextmanager
-async def mcp_lifespan(_server: FastMCP) -> AsyncIterator[AppContext]:
+async def mcp_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
     registry = QdrantAgentRegistry(
         url=config.qdrant_url,
         collection_name=config.qdrant_collection_name,
     )
     runtime_manager = DockerRuntimeManager()
     skills_registry = await SqliteSkillsRegistry.create(config.skills_db_path)
+
+    # MCP SDK currently uses global `contextvars.ContextVar` to store the context.
+    # https://github.com/modelcontextprotocol/python-sdk/issues/1684
+    server.agent_registry = registry
+    server.runtime_manager = runtime_manager
+    server.skills_registry = skills_registry
 
     try:
         yield AppContext(registry=registry, runtime_manager=runtime_manager, skills_registry=skills_registry)
@@ -118,7 +124,7 @@ async def mcp_lifespan(_server: FastMCP) -> AsyncIterator[AppContext]:
         await skills_registry.close()
 
 
-mcp = FastMCP("A4S MCP Server", lifespan=mcp_lifespan)
+mcp = FastMCP("A4S MCP Server", lifespan=mcp_lifespan, streamable_http_path="/")
 
 
 @mcp.tool()
@@ -228,42 +234,30 @@ async def search_skills(
 
 
 @mcp.resource("skill://{skill_name}/instructions")
-async def get_skill_instructions(
-    skill_name: str,
-    ctx: Context[ServerSession, AppContext],
-) -> str:
+async def get_skill_instructions(skill_name: str) -> str:
     """Get the SKILL.md instructions for a skill.
 
     Returns the full body content of the skill's SKILL.md file,
     which contains detailed instructions for using the skill.
     """
-    skills_registry = ctx.request_context.lifespan_context.skills_registry
-    skill = await skills_registry.get_skill_by_name(skill_name)
+    skill = await mcp.skills_registry.get_skill_by_name(skill_name)
     return skill.body
 
 
 @mcp.resource("skill://{skill_name}/file/{path}")
-async def get_skill_file(
-    skill_name: str,
-    path: str,
-    ctx: Context[ServerSession, AppContext],
-) -> bytes:
+async def get_skill_file(skill_name: str, path: str) -> bytes:
     """Get a specific file associated with a skill.
 
     Returns the content of the specified file from the skill's
     associated files (scripts, references, assets, etc.).
     """
-    skills_registry = ctx.request_context.lifespan_context.skills_registry
-    skill = await skills_registry.get_skill_by_name(skill_name)
-    skill_file = await skills_registry.get_skill_file_by_path(skill.id, path)
+    skill = await mcp.skills_registry.get_skill_by_name(skill_name)
+    skill_file = await mcp.skills_registry.get_skill_file_by_path(skill.id, path)
     return skill_file.content
 
 
 @mcp.prompt()
-async def activate_skill(
-    skill_name: str,
-    ctx: Context[ServerSession, AppContext],
-) -> str:
+async def activate_skill(skill_name: str) -> str:
     """Generate instructions for activating and using a specific skill.
 
     Args:
@@ -272,10 +266,8 @@ async def activate_skill(
     Returns:
         Formatted prompt with skill instructions.
     """
-    skills_registry = ctx.request_context.lifespan_context.skills_registry
-
     try:
-        skill = await skills_registry.get_skill_by_name(skill_name)
+        skill = await mcp.skills_registry.get_skill_by_name(skill_name)
     except skills_exc.SkillNotFoundError:
         return f"Error: Skill '{skill_name}' not found. Use search_skills to find available skills."
 
@@ -296,11 +288,7 @@ async def activate_skill(
 
 
 @mcp.prompt()
-async def discover_skills(
-    task_description: str,
-    ctx: Context[ServerSession, AppContext],
-    limit: int = 5,
-) -> str:
+async def discover_skills(task_description: str, limit: int = 5) -> str:
     """Find and recommend skills for a given task.
 
     Args:
@@ -310,8 +298,7 @@ async def discover_skills(
     Returns:
         Formatted prompt with skill recommendations.
     """
-    skills_registry = ctx.request_context.lifespan_context.skills_registry
-    skills = await skills_registry.search_skills(task_description, limit)
+    skills = await mcp.skills_registry.search_skills(task_description, limit)
 
     if not skills:
         return (
@@ -345,10 +332,7 @@ async def discover_skills(
     return "\n".join(parts)
 
 
-# Get the MCP ASGI app and mount it into FastAPI
-mcp_starlette_app = mcp.streamable_http_app()
-mcp_asgi_app = mcp_starlette_app.routes[0].app
-fastapi_app.mount("/mcp", mcp_asgi_app)
+fastapi_app.mount("/mcp", mcp.streamable_http_app())
 
 
 @asynccontextmanager
