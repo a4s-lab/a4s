@@ -6,8 +6,9 @@ A4S is an orchestration system for AI agents.
 
 Ensure you have the following tools installed:
 
-- [pre-commit](https://pre-commit.com/#install)
+- [uv](https://docs.astral.sh/uv/)
 
 ```bash
-pre-commit install
+uv sync
+uv run pre-commit install
 ```

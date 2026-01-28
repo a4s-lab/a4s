@@ -14,13 +14,10 @@ repos:
     hooks:
       - id: ruff-check
         args: [--fix]
-        files: ^api/
       - id: ruff-format
-        files: ^api/
 
   - repo: https://github.com/astral-sh/uv-pre-commit
     rev: 0.9.26
     hooks:
       - id: uv-lock
-        files: api/pyproject.toml
-        args: [--directory, api]
+        files: pyproject.toml
