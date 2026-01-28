@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "api",
+    "a4s-mcp",
 ]
 
 [dependency-groups]
@@ -17,9 +18,13 @@ dev = [
 
 [tool.uv.sources]
 api = { workspace = true }
+a4s-mcp = { workspace = true }
 
 [tool.uv.workspace]
-members = ["api"]
+members = [
+    "api",
+    "mcp",
+]
 
 [tool.pytest.ini_options]
 addopts = "-v"
