@@ -86,6 +86,7 @@ class DockerRuntimeManager(RuntimeManager):
             }
             environment = {
                 "AGENT_NAME": request.name,
+                "AGENT_HOST": container_name,
                 "AGENT_MODEL_PROVIDER": request.model.provider.value,
                 "AGENT_MODEL_ID": request.model.model_id,
                 "AGENT_INSTRUCTION": request.instruction,
