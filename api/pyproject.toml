@@ -34,7 +34,7 @@ sqlite = [
 
 [tool.uv]
 package = true
-default-groups = ["dev", "docker", "qdrant", "sqlite"]
+default-groups = ["docker", "qdrant", "sqlite"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]

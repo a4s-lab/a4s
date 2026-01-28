@@ -16,6 +16,7 @@ from app.broker.exceptions import (
 from app.broker.qdrant_registry import QdrantAgentRegistry
 from app.broker.registry import AgentRegistry
 from app.config import config
+from app.routers import health_router, v1_router
 from app.runtime.docker_manager import DockerRuntimeManager
 from app.runtime.exceptions import AgentNotFoundError, AgentSpawnError, ImageNotFoundError
 from app.runtime.manager import RuntimeManager
@@ -43,10 +44,8 @@ fastapi_app.add_middleware(
     allow_headers=["*"],
 )
 
-
-@fastapi_app.get("/health")
-def health_check() -> dict[str, str]:
-    return {"status": "ok"}
+fastapi_app.include_router(health_router)
+fastapi_app.include_router(v1_router)
 
 
 @fastapi_app.exception_handler(AgentNotFoundError)
@@ -103,25 +102,11 @@ async def skill_registry_error_handler(_request: Request, exc: skills_exc.SkillR
 
 @asynccontextmanager
 async def mcp_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
-    registry = QdrantAgentRegistry(
-        url=config.qdrant_url,
-        collection_name=config.registry_qdrant_collection,
+    yield AppContext(
+        registry=server.agent_registry,
+        runtime_manager=server.runtime_manager,
+        skills_registry=server.skills_registry,
     )
-    runtime_manager = DockerRuntimeManager()
-    skills_registry = await SqliteSkillsRegistry.create(config.skills_db_path)
-
-    # MCP SDK currently uses global `contextvars.ContextVar` to store the context.
-    # https://github.com/modelcontextprotocol/python-sdk/issues/1684
-    server.agent_registry = registry
-    server.runtime_manager = runtime_manager
-    server.skills_registry = skills_registry
-
-    try:
-        yield AppContext(registry=registry, runtime_manager=runtime_manager, skills_registry=skills_registry)
-    finally:
-        await registry.close()
-        runtime_manager.close()
-        await skills_registry.close()
 
 
 mcp = FastMCP("A4S MCP Server", lifespan=mcp_lifespan, streamable_http_path="/")
@@ -337,8 +322,29 @@ fastapi_app.mount("/mcp", mcp.streamable_http_app())
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    async with mcp.session_manager.run():
-        yield
+    registry = QdrantAgentRegistry(
+        url=config.qdrant_url,
+        collection_name=config.registry_qdrant_collection,
+    )
+    runtime_manager = DockerRuntimeManager()
+    skills_registry = await SqliteSkillsRegistry.create(config.skills_db_path)
+
+    _app.state.registry = registry
+    _app.state.runtime_manager = runtime_manager
+    _app.state.skills_registry = skills_registry
+
+    # MCP SDK workaround: https://github.com/modelcontextprotocol/python-sdk/issues/1684
+    mcp.agent_registry = registry
+    mcp.runtime_manager = runtime_manager
+    mcp.skills_registry = skills_registry
+
+    try:
+        async with mcp.session_manager.run():
+            yield
+    finally:
+        await registry.close()
+        runtime_manager.close()
+        await skills_registry.close()
 
 
 app = fastapi_app
