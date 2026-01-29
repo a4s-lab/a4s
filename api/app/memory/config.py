@@ -17,16 +17,20 @@ def to_mem0_config(config: Config) -> dict[str, Any]:
     match config.memory_llm_provider:
         case LLMProvider.OPENAI:
             llm_provider = "openai"
+            model = config.memory_llm_model
         case LLMProvider.GOOGLE:
             llm_provider = "google"
+            model = config.memory_llm_model
         case LLMProvider.OPENROUTER:
-            llm_provider = "openrouter"
+            llm_provider = "litellm"
+            model = f"openrouter/{config.memory_llm_model}"
         case _:
             llm_provider = config.memory_llm_provider.value
+            model = config.memory_llm_model
 
     result["llm"] = {
         "provider": llm_provider,
-        "config": {"model": config.memory_llm_model},
+        "config": {"model": model},
     }
 
     match config.memory_embedding_provider:

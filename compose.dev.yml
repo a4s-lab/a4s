@@ -15,6 +15,7 @@ services:
       - API_BASE_URL=http://a4s-api:8000
       - AGENT_NETWORK=a4s-network
       - QDRANT_URL=http://qdrant:6333
+      - GRAPHITI_FALKORDB_HOST=falkordb
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - model-cache:/root/.cache

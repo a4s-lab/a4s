@@ -43,19 +43,21 @@ mcp_toolset = McpToolset(
 
 ## Tools
 
-| Tool                                  | Description                   |
-| ------------------------------------- | ----------------------------- |
-| `search_agents(query, limit=10)`      | Find agents by capability     |
-| `send_a2a_message(agent_id, message)` | Send message to agent via A2A |
-| `search_skills(query, limit=10)`      | Find skills by description    |
-| `get_skills(names)`                   | Get skills by exact name      |
+| Tool                                                  | Description                     |
+| ----------------------------------------------------- | ------------------------------- |
+| `search_agents(query, limit=10)`                      | Find agents by capability       |
+| `send_a2a_message(agent_id, message)`                 | Send message to agent via A2A   |
+| `search_skills(query, limit=10)`                      | Find skills by name/description |
+| `add_memory(messages, user_id, agent_id)`             | Store conversation or fact      |
+| `search_memories(query, user_id, agent_id, limit=10)` | Semantic search over memories   |
+| `update_memory(memory_id, content)`                   | Update existing memory          |
+| `delete_memory(memory_id)`                            | Delete a memory                 |
 
 ## Resources
 
-- `skill://{name}/instructions` - Skill instructions
+- `skill://{name}/instructions` - Skill instructions (SKILL.md content)
 - `skill://{name}/file/{path}` - Skill files
 
 ## Prompts
 
 - `activate_skill(skill_name)` - Generate skill activation instructions
-- `discover_skills(task_description)` - Recommend skills for a task

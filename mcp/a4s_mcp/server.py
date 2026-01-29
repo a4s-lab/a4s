@@ -35,7 +35,27 @@ async def mcp_lifespan(_server: FastMCP) -> AsyncIterator[AppContext]:
         yield AppContext(client=client)
 
 
-mcp = FastMCP("A4S MCP Server", lifespan=mcp_lifespan)
+SERVER_INSTRUCTIONS = """A4S enables agent orchestration, skills, and memory.
+
+<agent-collaboration>
+To delegate work:
+1. Search for agents by capability
+2. Send a message to the selected agent
+</agent-collaboration>
+
+<skills>
+To use a skill:
+1. Search for skills by capability
+2. Read the skill's instructions resource
+3. Activate the skill for detailed guidance
+</skills>
+
+<memory>
+Store context for semantic retrieval. Scope to user/agent or leave global.
+</memory>
+"""
+
+mcp = FastMCP("A4S MCP Server", instructions=SERVER_INSTRUCTIONS, lifespan=mcp_lifespan)
 
 
 @mcp.tool()
@@ -44,17 +64,11 @@ async def search_agents(
     query: str,
     limit: int = 10,
 ) -> dict:
-    """Search for agents by name/description.
-
-    When to use:
-    - Find agents by capability (query="code review")
+    """Search for agents by name or description.
 
     Args:
-        query: Search query.
-        limit: Max results to return (default 10).
-
-    Returns:
-        {agents, query, limit}
+        query: Search query (e.g., "code review").
+        limit: Max results (default 10).
     """
     client = ctx.request_context.lifespan_context.client
     resp = await client.get("/api/v1/agents/search", params={"query": query, "limit": limit})
@@ -68,16 +82,11 @@ async def send_a2a_message(  # noqa: C901
     agent_id: str,
     message: str,
 ) -> dict:
-    """Send a message to a peer agent via A2A protocol.
-
-    Use search_agents first to find agents by capability, then call this with the agent's id.
+    """Send a message to an agent via A2A protocol.
 
     Args:
-        agent_id: ID of the target agent (from search_agents results).
-        message: The text message to send.
-
-    Returns:
-        {state, text}
+        agent_id: Agent ID from search_agents.
+        message: Text message to send.
     """
     api_client = ctx.request_context.lifespan_context.client
     resp = await api_client.get(f"/api/v1/agents/{agent_id}")
@@ -137,62 +146,16 @@ async def send_a2a_message(  # noqa: C901
 
 
 @mcp.tool()
-async def get_skills(
-    ctx: Context[ServerSession, AppContext],
-    names: list[str],
-) -> dict:
-    """Get metadata for specific skills by exact name.
-
-    When to use:
-    - Retrieve skills by name after search
-    - Verify skills exist before activation
-
-    When NOT to use:
-    - Don't know names - use search_skills
-    - Need instructions - read skill://{name}/instructions
-
-    Args:
-        names: List of exact skill names to retrieve.
-
-    Returns:
-        {found: [{name, description}], not_found: [names]}
-    """
-    client = ctx.request_context.lifespan_context.client
-    found = []
-    not_found = []
-
-    for name in names:
-        resp = await client.get(f"/api/v1/skills/by-name/{name}")
-        if resp.status_code == 200:
-            skill = resp.json()
-            found.append({"name": skill["name"], "description": skill["description"]})
-        else:
-            not_found.append(name)
-
-    return {"found": found, "not_found": not_found}
-
-
-@mcp.tool()
 async def search_skills(
     ctx: Context[ServerSession, AppContext],
     query: str,
     limit: int = 10,
 ) -> dict:
-    """Search for skills by name/description.
-
-    When to use:
-    - Find skills for a task (query="create PDF documents")
-
-    When NOT to use:
-    - Know exact skill names - use get_skills
-    - Need full instructions - read skill://{name}/instructions
+    """Search for skills by name or description.
 
     Args:
-        query: Search query.
-        limit: Max results to return (default 10).
-
-    Returns:
-        {skills, query, limit}
+        query: Search query (e.g., "create PDF").
+        limit: Max results (default 10).
     """
     client = ctx.request_context.lifespan_context.client
     resp = await client.get("/api/v1/skills/search", params={"query": query, "limit": limit})
@@ -208,27 +171,19 @@ async def search_skills(
 @mcp.tool()
 async def add_memory(
     ctx: Context[ServerSession, AppContext],
-    messages: str,
+    messages: str | list[dict[str, str]],
     user_id: str | None = None,
     agent_id: str | None = None,
 ) -> dict:
-    """Store a fact, preference, or conversation snippet.
-
-    When to use:
-    - Save user preferences ("prefers dark mode")
-    - Store facts for later recall
-    - Remember conversation context
+    """Store a conversation or fact for semantic retrieval.
 
     Args:
-        messages: Text to store (e.g., "User prefers dark mode").
-        user_id: Scope to user (default: None).
-        agent_id: Scope to agent (default: None).
-
-    Returns:
-        {id, content}
+        messages: Conversation [{"role": "user", "content": "..."}] or plain text.
+        user_id: Scope to user (None = global).
+        agent_id: Scope to agent (None = global).
     """
     client = ctx.request_context.lifespan_context.client
-    payload = {"messages": messages}
+    payload: dict = {"messages": messages}
     if user_id:
         payload["user_id"] = user_id
     if agent_id:
@@ -249,19 +204,11 @@ async def search_memories(
 ) -> dict:
     """Semantic search over stored memories.
 
-    When to use:
-    - Find relevant memories by meaning
-    - Recall user preferences
-    - Look up stored facts
-
     Args:
         query: Natural language search (e.g., "color preferences").
-        user_id: Filter by user.
-        agent_id: Filter by agent.
+        user_id: Filter by user (None = all).
+        agent_id: Filter by agent (None = all).
         limit: Max results (default 10).
-
-    Returns:
-        {memories: [{id, content, score}], query, count}
     """
     client = ctx.request_context.lifespan_context.client
     payload = {"query": query, "limit": limit}
@@ -284,16 +231,9 @@ async def update_memory(
 ) -> dict:
     """Update an existing memory's content.
 
-    When to use:
-    - Correct outdated information
-    - Refine a stored fact
-
     Args:
-        memory_id: ID from search_memories result.
+        memory_id: ID from search_memories.
         content: New content text.
-
-    Returns:
-        {id, content}
     """
     client = ctx.request_context.lifespan_context.client
     resp = await client.put(f"/api/v1/memories/{memory_id}", json={"content": content})
@@ -309,15 +249,8 @@ async def delete_memory(
 ) -> dict:
     """Delete a memory by ID.
 
-    When to use:
-    - Remove outdated or incorrect memories
-    - Clean up after user request
-
     Args:
-        memory_id: ID from search_memories result.
-
-    Returns:
-        {deleted: true, memory_id}
+        memory_id: ID from search_memories.
     """
     client = ctx.request_context.lifespan_context.client
     resp = await client.delete(f"/api/v1/memories/{memory_id}")
@@ -388,69 +321,3 @@ async def activate_skill(skill_name: str) -> str:
     parts.extend(["---", "You are now operating with this skill activated. Follow the instructions above."])
 
     return "\n".join(parts)
-
-
-@mcp.prompt()
-async def discover_skills(task_description: str, limit: int = 5) -> str:
-    """Find and recommend skills for a given task.
-
-    Args:
-        task_description: Description of the task to accomplish.
-        limit: Maximum number of skills to recommend.
-
-    Returns:
-        Formatted prompt with skill recommendations.
-    """
-    async with httpx.AsyncClient(base_url=config.api_base_url) as client:
-        resp = await client.get("/api/v1/skills/search", params={"query": task_description, "limit": limit})
-        resp.raise_for_status()
-        data = resp.json()
-        skills = data["skills"]
-
-    if not skills:
-        return (
-            f"No skills found matching: {task_description}\n\n"
-            "Consider trying a broader search query with search_skills."
-        )
-
-    parts = [
-        "# Skill Discovery Results",
-        "",
-        f"Task: {task_description}",
-        "",
-        f"Found {len(skills)} relevant skill(s):",
-        "",
-    ]
-
-    for i, skill in enumerate(skills, 1):
-        parts.extend([f"## {i}. {skill['name']}", skill["description"], ""])
-        if skill.get("tags"):
-            tags_str = ", ".join(f"{k}={v}" for k, v in skill["tags"].items())
-            parts.extend([f"Tags: {tags_str}", ""])
-
-    parts.extend(
-        [
-            "---",
-            "To activate a skill, use the activate_skill prompt with the skill name.",
-            "To get more details, read its instructions: skill://{skill_name}/instructions",
-        ]
-    )
-
-    return "\n".join(parts)
-
-
-@mcp.prompt()
-def memory_assistant() -> str:
-    """Get help with memory operations."""
-    return """Memory tools for storing and retrieving information.
-
-Tools:
-- add_memory: Store facts, preferences, conversations
-- search_memories: Find memories by semantic search
-- update_memory: Modify existing memory content
-- delete_memory: Remove a memory
-
-Tips:
-- Use user_id/agent_id to scope memories
-- Search returns relevance scores (higher = better match)
-- Get memory_id from search results before update/delete"""

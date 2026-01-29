@@ -17,12 +17,7 @@ SKIP_BUILD="${SKIP_BUILD:-false}"
 # Router Agent
 ROUTER_NAME="${ROUTER_NAME:-router}"
 ROUTER_DESCRIPTION="${ROUTER_DESCRIPTION:-Task router that analyzes requests and delegates to specialist agents}"
-ROUTER_INSTRUCTION="${ROUTER_INSTRUCTION:-You are a router agent. When you receive any task:
-1. Analyze what type of specialist is needed
-2. Use search_agents to find an appropriate agent (e.g., search for 'addition', 'multiplication', 'division', 'subtraction', or 'percentage')
-3. Use send_a2a_message to delegate the task to the found agent
-4. Return the response from the specialist agent exactly as received
-IMPORTANT: Never try to solve tasks yourself. Always delegate to specialists.}"
+ROUTER_INSTRUCTION="${ROUTER_INSTRUCTION:-You are a router. For every task: find a specialist agent, then send the task to them. Return their response. Never solve tasks yourself.}"
 ROUTER_ID=""
 
 # Addition Agent
