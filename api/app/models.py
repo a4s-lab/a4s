@@ -56,5 +56,6 @@ class Agent(BaseModel):
     version: str = Field(description="The version of the agent.")
     url: str = Field(description="The URL of the agent.")
     port: int = Field(description="The port of the agent.")
+    owner_id: str = Field(description="The ID of the agent's owner.")
     status: AgentStatus = Field(description="The status of the agent.", default=AgentStatus.PENDING)
     created_at: datetime = Field(description="The timestamp of the agent creation.", default_factory=datetime.now)

@@ -57,9 +57,8 @@ class FastEmbedEmbedder(EmbedderClient):
 class GraphitiMemoryManager(MemoryManager):
     """Memory manager implementation using Graphiti knowledge graph."""
 
-    def __init__(self, graphiti: Graphiti, group_id: str) -> None:
+    def __init__(self, graphiti: Graphiti) -> None:
         self._graphiti = graphiti
-        self._group_id = group_id
         self._queues: dict[str, asyncio.Queue[Callable[[], Awaitable[None]]]] = {}
         self._workers: dict[str, asyncio.Task[None]] = {}
 
@@ -94,7 +93,7 @@ class GraphitiMemoryManager(MemoryManager):
         await graphiti.build_indices_and_constraints()
 
         logger.info("Graphiti memory manager initialized")
-        return cls(graphiti, cfg.graphiti_default_group_id)
+        return cls(graphiti)
 
     @classmethod
     def _build_llm_client(cls, config: Config) -> OpenAIGenericClient:
@@ -146,29 +145,37 @@ class GraphitiMemoryManager(MemoryManager):
 
         raise ValueError(f"Unsupported embedding provider for Graphiti: {config.memory_embedding_provider}")
 
-    def _build_group_id(self, user_id: str | None, agent_id: str | None) -> str:
-        parts = []
-        if user_id:
-            parts.append(f"user-{user_id}")
-        if agent_id:
-            parts.append(f"agent-{agent_id}")
-        return "_".join(parts) if parts else self._group_id
+    def _build_write_group_id(self, agent_id: str, visibility: str) -> str:
+        return f"agent-{agent_id}-{visibility}"
 
-    async def add(self, request: CreateMemoryRequest) -> QueuedMemoryResponse:
+    def _build_search_group_ids(self, agent_id: str, requester_id: str, owner_id: str) -> list[str]:
+        if requester_id == owner_id:
+            return [f"agent-{agent_id}-private", f"agent-{agent_id}-public"]
+        return [f"agent-{agent_id}-public"]
+
+    async def add(self, request: CreateMemoryRequest, owner_id: str, requester_id: str) -> QueuedMemoryResponse:
         """Add a new memory to the knowledge graph.
 
         Args:
             request: Memory creation request.
+            owner_id: ID of the agent's owner.
+            requester_id: ID of the requester.
 
         Returns:
             Response indicating the memory has been queued for processing.
+
+        Raises:
+            PermissionError: If requester is not the owner.
         """
+        if requester_id != owner_id:
+            raise PermissionError("Only the owner can write to agent memory")
+
         if isinstance(request.messages, str):
             body = request.messages
         else:
             body = "\n".join(f"{m['role']}: {m['content']}" for m in request.messages)
 
-        group_id = self._build_group_id(request.user_id, request.agent_id)
+        group_id = self._build_write_group_id(request.agent_id, request.visibility.value)
         name = f"memory_{datetime.now(UTC).isoformat()}"
 
         async def process_episode() -> None:
@@ -221,9 +228,18 @@ class GraphitiMemoryManager(MemoryManager):
         finally:
             self._workers.pop(group_id, None)
 
-    async def search(self, request: SearchMemoryRequest) -> list[Memory]:
-        group_id = self._build_group_id(request.user_id, request.agent_id)
-        group_ids = [group_id] if group_id != self._group_id else None
+    async def search(self, request: SearchMemoryRequest, owner_id: str, requester_id: str) -> list[Memory]:
+        """Search for memories with access control.
+
+        Args:
+            request: Search request.
+            owner_id: ID of the agent's owner.
+            requester_id: ID of the requester for access control.
+
+        Returns:
+            List of matching memories based on access level.
+        """
+        group_ids = self._build_search_group_ids(request.agent_id, requester_id, owner_id)
 
         edges = await self._graphiti.search(
             query=request.query,
@@ -248,7 +264,19 @@ class GraphitiMemoryManager(MemoryManager):
             "Add new information as a new memory to update the knowledge graph."
         )
 
-    async def delete(self, memory_id: str) -> None:
+    async def delete(self, memory_id: str, owner_id: str, requester_id: str) -> None:
+        """Delete a memory.
+
+        Args:
+            memory_id: ID of the memory to delete.
+            owner_id: ID of the agent's owner.
+            requester_id: ID of the requester.
+
+        Raises:
+            PermissionError: If requester is not the owner.
+        """
+        if requester_id != owner_id:
+            raise PermissionError("Only the owner can delete agent memory")
         await self._graphiti.remove_episode(memory_id)
 
     async def close(self) -> None:

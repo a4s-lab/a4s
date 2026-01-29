@@ -13,6 +13,7 @@ class LLMProvider(str, Enum):
 
 class Config(BaseSettings):
     agent_name: str = "hello_world"
+    agent_id: str = ""
     agent_model_provider: LLMProvider = LLMProvider.GOOGLE
     agent_model_id: str = "gemini-3-flash-preview"
     agent_instruction: str = "You are a helpful assistant."

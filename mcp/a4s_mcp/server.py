@@ -31,7 +31,11 @@ class AppContext:
 
 @asynccontextmanager
 async def mcp_lifespan(_server: FastMCP) -> AsyncIterator[AppContext]:
-    async with httpx.AsyncClient(base_url=config.api_base_url) as client:
+    # TODO: Get requester identity from auth token instead of config
+    headers = {}
+    if config.requester_id:
+        headers["X-Requester-Id"] = config.requester_id
+    async with httpx.AsyncClient(base_url=config.api_base_url, headers=headers) as client:
         yield AppContext(client=client)
 
 
@@ -51,7 +55,28 @@ To use a skill:
 </skills>
 
 <memory>
-Store context for semantic retrieval. Scope to user/agent or leave global.
+Store context for semantic retrieval to enable better reasoning in future interactions.
+
+When to add memory:
+- User preference is shared (e.g., "I prefer dark mode", "Call me Alex")
+- Decision or suggestion is made that should persist
+- Goal or task is completed
+- New entity is introduced (person, project, concept)
+- User gives feedback or clarification
+
+Visibility guide:
+- PRIVATE: Owner-specific info (preferences, current tasks, personal context, session state)
+- PUBLIC (default): General knowledge useful to anyone (domain facts, stable knowledge)
+
+Examples:
+| Memory | Visibility |
+|--------|------------|
+| "User prefers concise responses" | private |
+| "Python uses indentation for blocks" | public |
+| "Currently debugging auth flow" | private |
+| "JWT tokens should be validated on every request" | public |
+
+NEVER store sensitive info (credentials, API keys, passwords, PII) in memory.
 </memory>
 """
 
@@ -172,50 +197,40 @@ async def search_skills(
 async def add_memory(
     ctx: Context[ServerSession, AppContext],
     messages: str | list[dict[str, str]],
-    user_id: str | None = None,
-    agent_id: str | None = None,
+    agent_id: str,
+    visibility: str = "public",
 ) -> dict:
-    """Store a conversation or fact for semantic retrieval.
+    """Store a memory.
 
     Args:
         messages: Conversation [{"role": "user", "content": "..."}] or plain text.
-        user_id: Scope to user (None = global).
-        agent_id: Scope to agent (None = global).
+        agent_id: Agent identifier for scoping (required).
+        visibility: "private" (owner only) or "public" (default, anyone can read).
     """
     client = ctx.request_context.lifespan_context.client
-    payload: dict = {"messages": messages}
-    if user_id:
-        payload["user_id"] = user_id
-    if agent_id:
-        payload["agent_id"] = agent_id
+    payload: dict = {"messages": messages, "agent_id": agent_id, "visibility": visibility}
     resp = await client.post("/api/v1/memories", json=payload)
     resp.raise_for_status()
     data = resp.json()
-    return {"id": data["id"], "content": data["content"]}
+    return {"message": data.get("message", "Memory queued"), "group_id": data.get("group_id", "")}
 
 
 @mcp.tool()
 async def search_memories(
     ctx: Context[ServerSession, AppContext],
     query: str,
-    user_id: str | None = None,
-    agent_id: str | None = None,
+    agent_id: str,
     limit: int = 10,
 ) -> dict:
-    """Semantic search over stored memories.
+    """Search memories. Owner sees private+public; others see public only.
 
     Args:
         query: Natural language search (e.g., "color preferences").
-        user_id: Filter by user (None = all).
-        agent_id: Filter by agent (None = all).
+        agent_id: Agent identifier for scoping (required).
         limit: Max results (default 10).
     """
     client = ctx.request_context.lifespan_context.client
-    payload = {"query": query, "limit": limit}
-    if user_id:
-        payload["user_id"] = user_id
-    if agent_id:
-        payload["agent_id"] = agent_id
+    payload = {"query": query, "agent_id": agent_id, "limit": limit}
     resp = await client.post("/api/v1/memories/search", json=payload)
     resp.raise_for_status()
     data = resp.json()
@@ -246,14 +261,16 @@ async def update_memory(
 async def delete_memory(
     ctx: Context[ServerSession, AppContext],
     memory_id: str,
+    agent_id: str,
 ) -> dict:
-    """Delete a memory by ID.
+    """Delete a memory. Only owner can delete.
 
     Args:
         memory_id: ID from search_memories.
+        agent_id: Agent identifier owning the memory (required).
     """
     client = ctx.request_context.lifespan_context.client
-    resp = await client.delete(f"/api/v1/memories/{memory_id}")
+    resp = await client.delete(f"/api/v1/memories/{memory_id}", params={"agent_id": agent_id})
     resp.raise_for_status()
     return {"deleted": True, "memory_id": memory_id}
 

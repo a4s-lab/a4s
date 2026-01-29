@@ -145,7 +145,8 @@ register_agent() {
     "name": "${name}",
     "description": "${description}",
     "version": "${AGENT_VERSION}",
-    "port": ${AGENT_PORT}
+    "port": ${AGENT_PORT},
+    "owner_id": "e2e-test-owner"
 }
 EOF
 )

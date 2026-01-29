@@ -41,12 +41,15 @@ def _create_model() -> str | LiteLlm:
 
 
 def create_agent() -> LlmAgent:
+    mcp_env = {"API_BASE_URL": config.a4s_api_url}
+    if config.agent_id:
+        mcp_env["REQUESTER_ID"] = config.agent_id
     mcp_toolset = McpToolset(
         connection_params=StdioConnectionParams(
             server_params=StdioServerParameters(
                 command="uv",
                 args=["run", "-m", "a4s_mcp"],
-                env={"API_BASE_URL": config.a4s_api_url},
+                env=mcp_env,
             ),
             timeout=180,
         ),

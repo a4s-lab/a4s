@@ -1,6 +1,14 @@
+from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel, Field
+
+
+class MemoryVisibility(str, Enum):
+    """Visibility level for memory storage."""
+
+    PRIVATE = "private"
+    PUBLIC = "public"
 
 
 class Memory(BaseModel):
@@ -22,26 +30,23 @@ class CreateMemoryRequest(BaseModel):
             [{"role": "user", "content": "Hello"}, {"role": "assistant", "content": "Hi"}],
         ],
     )
-    user_id: str | None = Field(default=None, description="User identifier for scoping.")
-    agent_id: str | None = Field(default=None, description="Agent identifier for scoping.")
+    agent_id: str = Field(description="Agent identifier for scoping.")
+    visibility: MemoryVisibility = Field(
+        default=MemoryVisibility.PUBLIC,
+        description="Visibility level: private (owner only) or public (anyone can read).",
+    )
     metadata: dict[str, Any] | None = Field(default=None, description="Additional metadata.")
 
 
 class SearchMemoryRequest(BaseModel):
-    """Request to search memories."""
+    """Request to search memories.
+
+    Note: requester_id is provided via X-Requester-Id header for access control.
+    """
 
     query: str = Field(description="Search query text.")
-    user_id: str | None = Field(default=None, description="Filter by user.")
-    agent_id: str | None = Field(default=None, description="Filter by agent.")
+    agent_id: str = Field(description="Agent identifier for scoping.")
     limit: int = Field(default=10, ge=1, le=100, description="Maximum results to return.")
-    metadata_filter: dict[str, Any] | None = Field(
-        default=None,
-        description="Filter by metadata key-value pairs.",
-    )
-    options: dict[str, Any] | None = Field(
-        default=None,
-        description="Provider-specific search options.",
-    )
 
 
 class UpdateMemoryRequest(BaseModel):

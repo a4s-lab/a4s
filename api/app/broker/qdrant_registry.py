@@ -61,6 +61,7 @@ class QdrantAgentRegistry(AgentRegistry):
             "version": agent.version,
             "url": agent.url,
             "port": agent.port,
+            "owner_id": agent.owner_id,
             "status": agent.status.value,
             "created_at": agent.created_at.isoformat(),
         }
@@ -73,6 +74,7 @@ class QdrantAgentRegistry(AgentRegistry):
             version=payload["version"],
             url=payload["url"],
             port=payload["port"],
+            owner_id=payload["owner_id"],
             status=AgentStatus(payload["status"]),
             created_at=datetime.fromisoformat(payload["created_at"]),
         )
