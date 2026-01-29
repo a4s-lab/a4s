@@ -67,3 +67,6 @@ class Mem0MemoryManager(MemoryManager):
 
     async def delete(self, memory_id: str) -> None:
         await self.memory.delete(memory_id)
+
+    async def close(self) -> None:
+        pass

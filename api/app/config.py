@@ -15,6 +15,11 @@ class EmbeddingProvider(str, Enum):
     FASTEMBED = "fastembed"
 
 
+class MemoryProvider(str, Enum):
+    MEM0 = "mem0"
+    GRAPHITI = "graphiti"
+
+
 class VectorStoreProvider(str, Enum):
     QDRANT = "qdrant"
 
@@ -48,6 +53,17 @@ class Config(BaseSettings):
     # Memory - Vector store
     memory_vector_store_provider: VectorStoreProvider = VectorStoreProvider.QDRANT
     memory_qdrant_collection: str = "memories"
+
+    # Memory provider selection
+    memory_provider: MemoryProvider = MemoryProvider.MEM0
+
+    # Graphiti - FalkorDB
+    graphiti_falkordb_host: str = "localhost"
+    graphiti_falkordb_port: int = 6379
+    graphiti_falkordb_username: str | None = None
+    graphiti_falkordb_password: SecretStr | None = None
+    graphiti_falkordb_database: str = "graphiti"
+    graphiti_default_group_id: str = "default"
 
     # API keys
     openai_api_key: SecretStr | None = None

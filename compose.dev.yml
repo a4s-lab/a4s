@@ -14,20 +14,30 @@ services:
     environment:
       - API_BASE_URL=http://a4s-api:8000
       - AGENT_NETWORK=a4s-network
-      - QDRANT_URL=http://registry:6333
+      - QDRANT_URL=http://qdrant:6333
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - model-cache:/root/.cache
     networks:
       - a4s-network
 
-  registry:
+  qdrant:
     image: qdrant/qdrant:v1.16
     ports:
       - "6333:6333"
       - "6334:6334"
     volumes:
-      - registry-data:/data
+      - qdrant-data:/data
+    networks:
+      - a4s-network
+
+  falkordb:
+    image: falkordb/falkordb:v4.16.0
+    ports:
+      - "6379:6379"
+      - "3000:3000"
+    volumes:
+      - falkordb-data:/data
     networks:
       - a4s-network
 
@@ -36,5 +46,7 @@ networks:
     name: a4s-network
 
 volumes:
-  registry-data:
+  qdrant-data:
+  falkordb-data:
+  # Model cache for fastembed
   model-cache:

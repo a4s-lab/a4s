@@ -19,3 +19,6 @@ class MemoryManager(ABC):
     @abstractmethod
     async def delete(self, memory_id: str) -> None:
         """Delete a memory."""
+
+    async def close(self) -> None:  # noqa: B027
+        """Close any resources held by the manager."""

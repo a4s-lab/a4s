@@ -12,7 +12,7 @@ from app.broker.exceptions import (
 )
 from app.broker.qdrant_registry import QdrantAgentRegistry
 from app.config import config
-from app.memory.mem0_manager import Mem0MemoryManager
+from app.memory.factory import create_memory_manager
 from app.routers import health_router, v1_router
 from app.runtime.docker_manager import DockerRuntimeManager
 from app.runtime.exceptions import AgentNotFoundError, AgentSpawnError, ImageNotFoundError
@@ -96,7 +96,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         network_name=config.agent_network,
     )
     skills_registry = await SqliteSkillsRegistry.create(config.skills_db_path)
-    memory_manager = await Mem0MemoryManager.create(config)
+    memory_manager = await create_memory_manager(config)
 
     app.state.registry = registry
     app.state.runtime_manager = runtime_manager
@@ -109,6 +109,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await registry.close()
         runtime_manager.close()
         await skills_registry.close()
+        await memory_manager.close()
 
 
 app = fastapi_app

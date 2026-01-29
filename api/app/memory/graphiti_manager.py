@@ -1,0 +1,207 @@
+from __future__ import annotations
+
+import logging
+from collections.abc import Iterable
+from datetime import UTC, datetime
+
+from fastembed import TextEmbedding
+from graphiti_core import Graphiti
+from graphiti_core.driver.falkordb_driver import FalkorDriver
+from graphiti_core.embedder.client import EmbedderClient, EmbedderConfig
+from graphiti_core.embedder.openai import OpenAIEmbedder, OpenAIEmbedderConfig
+from graphiti_core.llm_client.config import LLMConfig
+from graphiti_core.llm_client.openai_generic_client import OpenAIGenericClient
+from graphiti_core.nodes import EpisodeType
+
+from app.config import Config, EmbeddingProvider, LLMProvider
+from app.config import config as default_config
+from app.memory.manager import MemoryManager
+from app.memory.models import (
+    CreateMemoryRequest,
+    Memory,
+    SearchMemoryRequest,
+    UpdateMemoryRequest,
+)
+
+logger = logging.getLogger(__name__)
+
+
+class FastEmbedEmbedderConfig(EmbedderConfig):
+    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+
+
+class FastEmbedEmbedder(EmbedderClient):
+    """Embedder using fastembed for local embeddings."""
+
+    def __init__(self, config: FastEmbedEmbedderConfig | None = None) -> None:
+        if config is None:
+            config = FastEmbedEmbedderConfig()
+        self.config = config
+        self._client = TextEmbedding(model_name=config.embedding_model)
+
+    async def create(self, input_data: str | list[str] | Iterable[int] | Iterable[Iterable[int]]) -> list[float]:
+        if isinstance(input_data, str):
+            texts = [input_data]
+        else:
+            texts = list(input_data)
+        embeddings = list(self._client.embed(texts))
+        return embeddings[0].tolist()[: self.config.embedding_dim]
+
+    async def create_batch(self, input_data_list: list[str]) -> list[list[float]]:
+        embeddings = list(self._client.embed(input_data_list))
+        return [emb.tolist()[: self.config.embedding_dim] for emb in embeddings]
+
+
+class GraphitiMemoryManager(MemoryManager):
+    """Memory manager implementation using Graphiti knowledge graph."""
+
+    def __init__(self, graphiti: Graphiti, group_id: str) -> None:
+        self._graphiti = graphiti
+        self._group_id = group_id
+
+    @classmethod
+    async def create(cls, config: Config | None = None) -> GraphitiMemoryManager:
+        """Create a new GraphitiMemoryManager instance.
+
+        Args:
+            config: Optional configuration. Uses default config if not provided.
+
+        Returns:
+            A configured GraphitiMemoryManager instance.
+        """
+        cfg = config or default_config
+
+        driver = FalkorDriver(
+            host=cfg.graphiti_falkordb_host,
+            port=cfg.graphiti_falkordb_port,
+            username=cfg.graphiti_falkordb_username,
+            password=cfg.graphiti_falkordb_password.get_secret_value() if cfg.graphiti_falkordb_password else None,
+            database=cfg.graphiti_falkordb_database,
+        )
+
+        llm_client = cls._build_llm_client(cfg)
+        embedder = cls._build_embedder(cfg)
+
+        graphiti = Graphiti(
+            graph_driver=driver,
+            llm_client=llm_client,
+            embedder=embedder,
+        )
+        await graphiti.build_indices_and_constraints()
+
+        logger.info("Graphiti memory manager initialized")
+        return cls(graphiti, cfg.graphiti_default_group_id)
+
+    @classmethod
+    def _build_llm_client(cls, config: Config) -> OpenAIGenericClient:
+        if config.memory_llm_provider == LLMProvider.OPENAI:
+            api_key = config.openai_api_key.get_secret_value() if config.openai_api_key else ""
+            llm_config = LLMConfig(
+                api_key=api_key,
+                model=config.memory_llm_model,
+                base_url=config.memory_llm_base_url,
+            )
+        elif config.memory_llm_provider == LLMProvider.GOOGLE:
+            api_key = config.google_api_key.get_secret_value() if config.google_api_key else ""
+            llm_config = LLMConfig(
+                api_key=api_key,
+                model=config.memory_llm_model,
+                base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+            )
+        elif config.memory_llm_provider == LLMProvider.OPENROUTER:
+            api_key = config.openrouter_api_key.get_secret_value() if config.openrouter_api_key else ""
+            llm_config = LLMConfig(
+                api_key=api_key,
+                model=config.memory_llm_model,
+                base_url="https://openrouter.ai/api/v1",
+            )
+        else:
+            raise ValueError(f"Unsupported LLM provider: {config.memory_llm_provider}")
+
+        return OpenAIGenericClient(config=llm_config)
+
+    @classmethod
+    def _build_embedder(cls, config: Config) -> EmbedderClient:
+        if config.memory_embedding_provider == EmbeddingProvider.FASTEMBED:
+            return FastEmbedEmbedder(
+                config=FastEmbedEmbedderConfig(
+                    embedding_model=config.memory_embedding_model,
+                    embedding_dim=config.memory_embedding_dims,
+                )
+            )
+
+        if config.memory_embedding_provider == EmbeddingProvider.OPENAI:
+            api_key = config.openai_api_key.get_secret_value() if config.openai_api_key else ""
+            return OpenAIEmbedder(
+                config=OpenAIEmbedderConfig(
+                    api_key=api_key,
+                    embedding_model=config.memory_embedding_model,
+                    embedding_dim=config.memory_embedding_dims,
+                )
+            )
+
+        raise ValueError(f"Unsupported embedding provider for Graphiti: {config.memory_embedding_provider}")
+
+    def _build_group_id(self, user_id: str | None, agent_id: str | None) -> str:
+        parts = []
+        if user_id:
+            parts.append(f"user-{user_id}")
+        if agent_id:
+            parts.append(f"agent-{agent_id}")
+        return "_".join(parts) if parts else self._group_id
+
+    async def add(self, request: CreateMemoryRequest) -> Memory:
+        if isinstance(request.messages, str):
+            body = request.messages
+        else:
+            body = "\n".join(f"{m['role']}: {m['content']}" for m in request.messages)
+
+        group_id = self._build_group_id(request.user_id, request.agent_id)
+
+        result = await self._graphiti.add_episode(
+            name=f"memory_{datetime.now(UTC).isoformat()}",
+            episode_body=body,
+            source=EpisodeType.text,
+            source_description="memory_api",
+            reference_time=datetime.now(UTC),
+            group_id=group_id,
+        )
+
+        return Memory(
+            id=result.episode.uuid,
+            content=body,
+            metadata={"group_id": group_id, **(request.metadata or {})},
+        )
+
+    async def search(self, request: SearchMemoryRequest) -> list[Memory]:
+        group_id = self._build_group_id(request.user_id, request.agent_id)
+        group_ids = [group_id] if group_id != self._group_id else None
+
+        edges = await self._graphiti.search(
+            query=request.query,
+            group_ids=group_ids,
+            num_results=request.limit,
+        )
+
+        return [
+            Memory(
+                id=edge.uuid,
+                content=edge.fact,
+                metadata={
+                    "valid_at": edge.valid_at.isoformat() if edge.valid_at else None,
+                },
+            )
+            for edge in edges
+        ]
+
+    async def update(self, memory_id: str, request: UpdateMemoryRequest) -> Memory:
+        raise NotImplementedError(
+            "Graphiti does not support direct memory updates. "
+            "Add new information as a new memory to update the knowledge graph."
+        )
+
+    async def delete(self, memory_id: str) -> None:
+        await self._graphiti.remove_episode(memory_id)
+
+    async def close(self) -> None:
+        await self._graphiti.close()
