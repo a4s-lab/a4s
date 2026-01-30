@@ -1,56 +1,54 @@
 import 'package:flutter/material.dart';
-import 'package:lunarr/constants/colors.dart';
-import 'package:lunarr/views/sign_in_view.dart';
-import 'package:lunarr/views/sign_up_2_view.dart';
-import 'package:lunarr/widgets/emblem_widget.dart';
+import 'package:lunarr/controllers/sign_controller.dart';
 
 class SignUp1View extends StatefulWidget {
-  const SignUp1View({super.key});
+  final void Function(int i) setIndex;
+  const SignUp1View(this.setIndex, {super.key});
 
   @override
   State<SignUp1View> createState() => _SignUp1ViewState();
 }
 
 class _SignUp1ViewState extends State<SignUp1View> {
+  final firstNameController = TextEditingController();
+  final lastNameController = TextEditingController();
+  final birthdayController = TextEditingController();
+  final genderController = TextEditingController();
+  final List<String> genderOptions = const [
+    'Male',
+    'Female',
+    'Rather not say',
+    'Custom',
+  ];
+
+  @override
+  void dispose() {
+    firstNameController.dispose();
+    lastNameController.dispose();
+    birthdayController.dispose();
+    genderController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
+      final dateStr = picked.toLocal().toString().split(' ')[0];
+      birthdayController.text = dateStr;
+      SignController().birthday = dateStr;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     ColorScheme cs = Theme.of(context).colorScheme;
     TextTheme tt = Theme.of(context).textTheme;
 
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(gradient: LUNARR_COLOR),
-        child: Center(
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            constraints: BoxConstraints(minHeight: 480, maxWidth: 480),
-            decoration: BoxDecoration(
-              color: cs.surface.withAlpha(128),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                EmblemWidget(tt: tt, cs: cs),
-                _Form(tt: tt, cs: cs),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Form extends StatelessWidget {
-  const _Form({required this.tt, required this.cs});
-
-  final TextTheme tt;
-  final ColorScheme cs;
-
-  @override
-  Widget build(BuildContext context) {
     return Column(
       spacing: 24,
       children: [
@@ -59,63 +57,70 @@ class _Form extends StatelessWidget {
           children: [
             Expanded(
               child: TextField(
+                controller: firstNameController,
+                onChanged: (value) => SignController().firstName = value,
                 decoration: InputDecoration(labelText: 'First name'),
               ),
             ),
             Expanded(
               child: TextField(
+                controller: lastNameController,
+                onChanged: (value) => SignController().lastName = value,
                 decoration: InputDecoration(labelText: 'Last name (optional)'),
               ),
             ),
           ],
         ),
         TextField(
+          controller: birthdayController,
+          readOnly: true,
           decoration: InputDecoration(
             labelText: 'Birthday',
-            suffixIcon: IconButton(onPressed: () {}, icon: Icon(Icons.today)),
-          ),
-        ),
-        TextField(
-          decoration: InputDecoration(
-            labelText: 'Gender',
             suffixIcon: IconButton(
-              onPressed: () {},
-              icon: Icon(Icons.arrow_drop_down),
+              onPressed: () => _selectDate(context),
+              icon: Icon(Icons.today),
             ),
           ),
         ),
-        TextField(decoration: InputDecoration(labelText: 'Email address')),
-        TextField(
-          decoration: InputDecoration(
-            labelText: 'Password',
-            suffixIcon: IconButton(
-              onPressed: () {},
-              icon: Icon(Icons.visibility),
-            ),
-          ),
-          obscureText: true,
+        DropdownMenu<String>(
+          controller: genderController,
+          expandedInsets: EdgeInsets.zero,
+          label: const Text('Gender'),
+          dropdownMenuEntries: genderOptions.map<DropdownMenuEntry<String>>((
+            String value,
+          ) {
+            return DropdownMenuEntry<String>(value: value, label: value);
+          }).toList(),
+          onSelected: (String? value) {
+            SignController().gender = value;
+          },
         ),
-        TextField(
-          decoration: InputDecoration(
-            labelText: 'Confirm',
-            suffixIcon: IconButton(
-              onPressed: () {},
-              icon: Icon(Icons.visibility),
+        Row(
+          spacing: 8,
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 40,
+                child: OutlinedButton(
+                  onPressed: () {
+                    widget.setIndex(0);
+                  },
+                  child: Text('Back'),
+                ),
+              ),
             ),
-          ),
-          obscureText: true,
-        ),
-        SizedBox(
-          width: double.infinity,
-          height: 40,
-          child: FilledButton(
-            onPressed: () {
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => SignUp2View()),
-              );
-            },
-            child: Text('Sign Up'),
-          ),
+            Expanded(
+              child: SizedBox(
+                height: 40,
+                child: FilledButton(
+                  onPressed: () {
+                    widget.setIndex(2);
+                  },
+                  child: Text('Next'),
+                ),
+              ),
+            ),
+          ],
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -126,9 +131,7 @@ class _Form extends StatelessWidget {
               height: 40,
               child: TextButton(
                 onPressed: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => SignInView()),
-                  );
+                  widget.setIndex(0);
                 },
                 child: Text(
                   'Sign In',

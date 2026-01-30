@@ -1,69 +1,57 @@
 import 'package:flutter/material.dart';
-import 'package:lunarr/constants/colors.dart';
-import 'package:lunarr/views/sign_up_1_view.dart';
-import 'package:lunarr/views/workspaces_view.dart';
-import 'package:lunarr/widgets/emblem_widget.dart';
+import 'package:lunarr/controllers/sign_controller.dart';
+import 'package:lunarr/views/workspace_view.dart';
 
 class SignInView extends StatefulWidget {
-  const SignInView({super.key});
+  final void Function(int i) setIndex;
+  const SignInView(this.setIndex, {super.key});
 
   @override
   State<SignInView> createState() => _SignInViewState();
 }
 
 class _SignInViewState extends State<SignInView> {
+  final emailAddressController = TextEditingController();
+  final passwordController = TextEditingController();
+  bool _isPasswordObscured = true;
+
+  @override
+  void dispose() {
+    emailAddressController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     ColorScheme cs = Theme.of(context).colorScheme;
     TextTheme tt = Theme.of(context).textTheme;
 
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(gradient: LUNARR_COLOR),
-        child: Center(
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            constraints: BoxConstraints(minHeight: 480, maxWidth: 480),
-            decoration: BoxDecoration(
-              color: cs.surface.withAlpha(128),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                EmblemWidget(tt: tt, cs: cs),
-                _Form(tt: tt, cs: cs),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Form extends StatelessWidget {
-  const _Form({required this.tt, required this.cs});
-
-  final TextTheme tt;
-  final ColorScheme cs;
-
-  @override
-  Widget build(BuildContext context) {
     return Column(
       spacing: 24,
       children: [
-        TextField(decoration: InputDecoration(labelText: 'Email address')),
         TextField(
+          controller: emailAddressController,
+          onChanged: (value) => SignController().signInEmailAddress = value,
+          decoration: InputDecoration(labelText: 'Email address'),
+        ),
+        TextField(
+          controller: passwordController,
+          onChanged: (value) => SignController().signInPassword = value,
           decoration: InputDecoration(
             labelText: 'Password',
             suffixIcon: IconButton(
-              onPressed: () {},
-              icon: Icon(Icons.visibility),
+              onPressed: () {
+                setState(() {
+                  _isPasswordObscured = !_isPasswordObscured;
+                });
+              },
+              icon: Icon(
+                _isPasswordObscured ? Icons.visibility : Icons.visibility_off,
+              ),
             ),
           ),
-          obscureText: true,
+          obscureText: _isPasswordObscured,
         ),
         SizedBox(
           width: double.infinity,
@@ -71,7 +59,7 @@ class _Form extends StatelessWidget {
           child: FilledButton(
             onPressed: () {
               Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => WorkspacesView()),
+                MaterialPageRoute(builder: (context) => WorkspaceView()),
               );
             },
             child: Text('Sign In'),
@@ -86,9 +74,7 @@ class _Form extends StatelessWidget {
               height: 40,
               child: TextButton(
                 onPressed: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => SignUp1View()),
-                  );
+                  widget.setIndex(1);
                 },
                 child: Text(
                   'Sign Up',

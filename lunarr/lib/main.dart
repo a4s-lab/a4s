@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lunarr/constants/colors.dart';
 import 'package:lunarr/constants/texts.dart';
 import 'package:lunarr/utils/default_page_transitions_builder.dart';
-import 'package:lunarr/views/sign_in_view.dart';
+import 'package:lunarr/views/sign_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -43,7 +43,7 @@ class MyApp extends StatelessWidget {
           builders: {TargetPlatform.windows: DefaultPageTransitionsBuilder()},
         ),
       ),
-      home: SignInView(),
+      home: SignView(),
     );
   }
 }
