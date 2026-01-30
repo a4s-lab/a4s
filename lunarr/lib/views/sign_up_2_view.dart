@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lunarr/models/sign_model.dart';
+import 'package:lunarr/services/sign_service.dart';
 
 class SignUp2View extends StatefulWidget {
   final void Function(int i) setIndex;
@@ -19,7 +19,7 @@ class _SignUp2ViewState extends State<SignUp2View> {
   @override
   void initState() {
     super.initState();
-    final signController = SignModel();
+    final signController = SignServices();
     emailAddressController.text = signController.signUpEmailAddress ?? '';
     passwordController.text = signController.signUpPassword ?? '';
     confirmController.text = signController.confirm ?? '';
@@ -43,12 +43,12 @@ class _SignUp2ViewState extends State<SignUp2View> {
       children: [
         TextField(
           controller: emailAddressController,
-          onChanged: (value) => SignModel().signUpEmailAddress = value,
+          onChanged: (value) => SignServices().signUpEmailAddress = value,
           decoration: InputDecoration(labelText: 'Email address'),
         ),
         TextField(
           controller: passwordController,
-          onChanged: (value) => SignModel().signUpPassword = value,
+          onChanged: (value) => SignServices().signUpPassword = value,
           obscureText: _isPasswordObscured,
           decoration: InputDecoration(
             labelText: 'Password',
@@ -66,7 +66,7 @@ class _SignUp2ViewState extends State<SignUp2View> {
         ),
         TextField(
           controller: confirmController,
-          onChanged: (value) => SignModel().confirm = value,
+          onChanged: (value) => SignServices().confirm = value,
           obscureText: _isConfirmObscured,
           decoration: InputDecoration(
             labelText: 'Confirm',

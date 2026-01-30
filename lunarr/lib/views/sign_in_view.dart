@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lunarr/models/sign_model.dart';
-import 'package:lunarr/views/main_view.dart';
+import 'package:lunarr/services/sign_service.dart';
+import 'package:lunarr/views/workspace_view.dart';
 
 class SignInView extends StatefulWidget {
   final void Function(int i) setIndex;
@@ -32,12 +32,12 @@ class _SignInViewState extends State<SignInView> {
       children: [
         TextField(
           controller: emailAddressController,
-          onChanged: (value) => SignModel().signInEmailAddress = value,
+          onChanged: (value) => SignServices().signInEmailAddress = value,
           decoration: InputDecoration(labelText: 'Email address'),
         ),
         TextField(
           controller: passwordController,
-          onChanged: (value) => SignModel().signInPassword = value,
+          onChanged: (value) => SignServices().signInPassword = value,
           decoration: InputDecoration(
             labelText: 'Password',
             suffixIcon: IconButton(
@@ -60,8 +60,7 @@ class _SignInViewState extends State<SignInView> {
               child: FilledButton(
                 onPressed: () {
                   Navigator.of(context).pushReplacement(
-                    // MaterialPageRoute(builder: (context) => WorkspaceView()),
-                    MaterialPageRoute(builder: (context) => MainView()),
+                    MaterialPageRoute(builder: (context) => WorkspaceView()),
                   );
                 },
                 child: Text('Sign In'),

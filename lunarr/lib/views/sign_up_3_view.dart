@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lunarr/models/sign_model.dart';
-import 'package:lunarr/views/main_view.dart';
+import 'package:lunarr/services/sign_service.dart';
+import 'package:lunarr/views/workspace_view.dart';
 
 class SignUp3View extends StatefulWidget {
   final void Function(int i) setIndex;
@@ -31,7 +31,7 @@ class _SignUp3ViewState extends State<SignUp3View> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Enter the code we sent to ${SignModel().signUpEmailAddress ?? 'email address'}.',
+              'Enter the code we sent to ${SignServices().signUpEmailAddress ?? 'email address'}.',
               style: tt.bodyLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: cs.onSurface,
@@ -45,7 +45,7 @@ class _SignUp3ViewState extends State<SignUp3View> {
         ),
         TextField(
           controller: codeController,
-          onChanged: (value) => SignModel().code = value,
+          onChanged: (value) => SignServices().code = value,
           decoration: InputDecoration(labelText: 'Enter code'),
         ),
         Row(
@@ -63,8 +63,7 @@ class _SignUp3ViewState extends State<SignUp3View> {
               child: FilledButton(
                 onPressed: () {
                   Navigator.of(context).pushReplacement(
-                    // MaterialPageRoute(builder: (context) => WorkspaceView()),
-                    MaterialPageRoute(builder: (context) => MainView()),
+                    MaterialPageRoute(builder: (context) => WorkspaceView()),
                   );
                 },
                 child: Text('Next'),

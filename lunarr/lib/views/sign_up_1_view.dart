@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lunarr/models/sign_model.dart';
+import 'package:lunarr/services/sign_service.dart';
 
 class SignUp1View extends StatefulWidget {
   final void Function(int i) setIndex;
@@ -40,7 +40,7 @@ class _SignUp1ViewState extends State<SignUp1View> {
     if (picked != null) {
       final dateStr = picked.toLocal().toString().split(' ')[0];
       birthdayController.text = dateStr;
-      SignModel().birthday = dateStr;
+      SignServices().birthday = dateStr;
     }
   }
 
@@ -58,14 +58,14 @@ class _SignUp1ViewState extends State<SignUp1View> {
             Expanded(
               child: TextField(
                 controller: firstNameController,
-                onChanged: (value) => SignModel().firstName = value,
+                onChanged: (value) => SignServices().firstName = value,
                 decoration: InputDecoration(labelText: 'First name'),
               ),
             ),
             Expanded(
               child: TextField(
                 controller: lastNameController,
-                onChanged: (value) => SignModel().lastName = value,
+                onChanged: (value) => SignServices().lastName = value,
                 decoration: InputDecoration(labelText: 'Last name (optional)'),
               ),
             ),
@@ -92,7 +92,7 @@ class _SignUp1ViewState extends State<SignUp1View> {
             return DropdownMenuEntry<String>(value: value, label: value);
           }).toList(),
           onSelected: (String? value) {
-            SignModel().gender = value;
+            SignServices().gender = value;
           },
         ),
         Row(
