@@ -33,46 +33,153 @@ class _AgentChatViewState extends State<AgentChatView> {
       children: [
         Column(
           spacing: 24,
+          children: [_buildAppBar(am, tt, cs), _buildChat(cs, tt)],
+        ),
+        _buildGradient(cs),
+        _buildInput(cs, tt),
+      ],
+    );
+  }
+
+  Expanded _buildChat(ColorScheme cs, TextTheme tt) {
+    return Expanded(
+      child: FutureBuilder(
+        future: initFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+          return SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: 200),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 24,
+              children: [
+                ...acc.agentCardModelss.map(
+                  (acms) => _buildAgentCards(
+                    acms,
+                    cs,
+                    tt,
+                    acc.lock && acms == acc.agentCardModelss.last,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildGradient(ColorScheme cs) {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Container(
+        height: 300,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.white.withAlpha(0), Colors.white, Colors.white],
+            stops: const [0.0, 0.8, 1.0],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInput(ColorScheme cs, TextTheme tt) {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 12,
           children: [
-            _buildAppBar(am, tt, cs),
-            Expanded(
-              child: FutureBuilder(
-                future: initFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
-                  }
-                  return SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      spacing: 24,
-                      children: [
-                        ...acc.agentCardModelss.map(
-                          (acms) => _buildAgentCards(
-                            acms,
-                            cs,
-                            tt,
-                            acc.lock && acms == acc.agentCardModelss.last,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+            Card.outlined(
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28),
+                side: BorderSide(color: cs.outline),
               ),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 720),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: acc.textEditingController,
+                      onChanged: (value) {
+                        acc.input = value;
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Ask ${am.labelString}',
+                        hintStyle: tt.bodyLarge?.copyWith(
+                          color: cs.onSurfaceVariant,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      style: tt.bodyLarge?.copyWith(color: cs.onSurface),
+                    ),
+                    SizedBox(
+                      height: 48,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              IconButton(
+                                onPressed: () {},
+                                icon: Icon(Icons.add, color: cs.onSurface),
+                              ),
+                              TextButton.icon(
+                                onPressed: () {},
+                                icon: Icon(Icons.tune, color: cs.onSurface),
+                                label: Text(
+                                  'Tools',
+                                  style: tt.labelLarge?.copyWith(
+                                    color: cs.onSurface,
+                                  ),
+                                ),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: cs.onSurface,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          IconButton(
+                            onPressed: acc.lock
+                                ? null
+                                : () async {
+                                    // TODO
+                                    await acc.getAgentCardModels();
+                                    setState(() {});
+                                  },
+                            icon: Icon(Icons.send, color: cs.onSurface),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Text(
+              'Lunarr can make mistakes, including about people, so double-check it.',
+              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
             ),
           ],
         ),
-        IconButton(
-          onPressed: acc.lock
-              ? null
-              : () async {
-                  await acc.getAgentCardModels();
-                  setState(() {});
-                },
-          icon: Icon(Icons.send, color: cs.onSurface),
-        ),
-      ],
+      ),
     );
   }
 
@@ -108,8 +215,8 @@ class _AgentChatViewState extends State<AgentChatView> {
       return Column(
         spacing: 24,
         children: [
-          SizedBox(
-            width: 720,
+          Container(
+            constraints: const BoxConstraints(maxWidth: 720),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -128,10 +235,13 @@ class _AgentChatViewState extends State<AgentChatView> {
                     return FilledButton(
                       onPressed: isConfirmed.value
                           ? null
-                          : () {
+                          : () async {
                               updateIsConfirmed();
                               deleteAreSelectedCount();
                               deleteIsConfirmed();
+
+                              await acc.getAgentChatModel();
+                              setState(() {});
                             },
                       child: Text('Confirm'),
                     );
@@ -186,8 +296,8 @@ class _AgentChatViewState extends State<AgentChatView> {
       return Column(
         spacing: 24,
         children: [
-          SizedBox(
-            width: 720,
+          Container(
+            constraints: const BoxConstraints(maxWidth: 720),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

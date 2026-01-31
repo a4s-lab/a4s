@@ -18,8 +18,8 @@ class _AgentCardWidgetState extends State<AgentCardWidget> {
     ColorScheme cs = Theme.of(context).colorScheme;
     TextTheme tt = Theme.of(context).textTheme;
 
-    return SizedBox(
-      width: 356,
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 356),
       child: Card.outlined(
         color: Colors.white,
         shape: RoundedRectangleBorder(
