@@ -16,12 +16,12 @@ class _AgentChatViewState extends State<AgentChatView> {
   final AgentModel am = AgentService().agentModel;
   final AgentChatController acc = AgentChatController();
 
-  late Future<void> _initFuture;
+  late Future<void> initFuture;
 
   @override
   void initState() {
     super.initState();
-    _initFuture = acc.fetchAgentCardModels();
+    initFuture = acc.fetchAgentCardModels();
   }
 
   @override
@@ -37,7 +37,7 @@ class _AgentChatViewState extends State<AgentChatView> {
             _buildAppBar(am, tt, cs),
             Expanded(
               child: FutureBuilder(
-                future: _initFuture,
+                future: initFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return Center(child: CircularProgressIndicator());

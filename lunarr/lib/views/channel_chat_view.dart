@@ -16,12 +16,12 @@ class _ChannelChatViewState extends State<ChannelChatView> {
   final ChannelModel cm = ChannelService().channelModel;
   final ChannelChatController ccc = ChannelChatController();
 
-  late Future<void> _initFuture;
+  late Future<void> initFuture;
 
   @override
   void initState() {
     super.initState();
-    _initFuture = ccc.fetchAgentCardModels();
+    initFuture = ccc.fetchAgentCardModels();
   }
 
   @override
@@ -37,7 +37,7 @@ class _ChannelChatViewState extends State<ChannelChatView> {
             _buildAppBar(cm, tt, cs),
             Expanded(
               child: FutureBuilder(
-                future: _initFuture,
+                future: initFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return Center(child: CircularProgressIndicator());
