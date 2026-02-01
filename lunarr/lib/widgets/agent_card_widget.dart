@@ -1,0 +1,122 @@
+import 'package:flutter/material.dart';
+import 'package:lunarr/models/agent_card_model.dart';
+import 'package:lunarr/widgets/agent_card_dialog_widget.dart';
+
+class AgentCardWidget extends StatefulWidget {
+  final AgentCardModel acm;
+  final VoidCallback? onTap;
+
+  const AgentCardWidget({super.key, required this.acm, this.onTap});
+
+  @override
+  State<AgentCardWidget> createState() => _AgentCardWidgetState();
+}
+
+class _AgentCardWidgetState extends State<AgentCardWidget> {
+  @override
+  Widget build(BuildContext context) {
+    ColorScheme cs = Theme.of(context).colorScheme;
+    TextTheme tt = Theme.of(context).textTheme;
+
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 356),
+      child: Card.outlined(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: widget.acm.isSelected ? cs.primary : cs.outlineVariant,
+          ),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: widget.onTap != null
+              ? () {
+                  setState(() {
+                    widget.acm.isSelected = !widget.acm.isSelected;
+                    widget.onTap?.call();
+                  });
+                }
+              : null,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 4, 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      spacing: 12,
+                      children: [
+                        CircleAvatar(
+                          radius: 20,
+                          child: Image.asset(widget.acm.iconString),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.acm.name,
+                              style: tt.titleMedium?.copyWith(
+                                color: cs.onSurface,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              widget.acm.distributionList,
+                              style: tt.bodyMedium?.copyWith(
+                                color: cs.onSurface,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    MenuAnchor(
+                      builder:
+                          (
+                            BuildContext context,
+                            MenuController controller,
+                            Widget? child,
+                          ) {
+                            return IconButton(
+                              onPressed: () {
+                                if (controller.isOpen) {
+                                  controller.close();
+                                } else {
+                                  controller.open();
+                                }
+                              },
+                              icon: Icon(Icons.more_vert),
+                              tooltip: 'Show menu',
+                            );
+                          },
+                      menuChildren: [
+                        MenuItemButton(
+                          onPressed: () => showDialog(
+                            context: context,
+                            builder: (context) =>
+                                AgentCardDialogWidget(acm: widget.acm),
+                          ),
+                          child: const Text('Details'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  widget.acm.description,
+                  style: tt.bodyMedium?.copyWith(color: cs.onSurface),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
