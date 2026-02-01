@@ -54,12 +54,12 @@ class _ChannelChatViewState extends State<ChannelChatView> {
               spacing: 24,
               children: [
                 ...ccc.channelChatModels.map((ccms) {
-                  switch (ccms.channelChatType) {
+                  switch (ccms.type) {
                     case ChannelChatType.question:
                       return _buildQuestion(ccms, cs, tt);
                     case ChannelChatType.selection:
                       return _buildSelection(
-                        ccms.agentCardModels!,
+                        ccms.selectionBody!,
                         cs,
                         tt,
                         ccc.lock && ccms == ccc.channelChatModels.last,
@@ -99,7 +99,7 @@ class _ChannelChatViewState extends State<ChannelChatView> {
                   ),
                 ),
                 child: Text(
-                  model.body ?? '',
+                  model.questionBody ?? '',
                   style: tt.bodyLarge?.copyWith(color: cs.onSurface),
                 ),
               ),
@@ -309,7 +309,7 @@ class _ChannelChatViewState extends State<ChannelChatView> {
                 constraints: BoxConstraints(maxWidth: 480),
                 padding: EdgeInsets.all(24),
                 child: Text(
-                  model.body ?? '',
+                  model.answerBody ?? '',
                   style: tt.bodyLarge?.copyWith(color: cs.onSurface),
                 ),
               ),

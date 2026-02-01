@@ -54,12 +54,12 @@ class _AgentChatViewState extends State<AgentChatView> {
               spacing: 24,
               children: [
                 ...acc.agentChatModels.map((acms) {
-                  switch (acms.agentChatType) {
+                  switch (acms.type) {
                     case AgentChatType.question:
                       return _buildQuestion(acms, cs, tt);
                     case AgentChatType.selection:
                       return _buildSelection(
-                        acms.agentCardModels!,
+                        acms.selectionBody!,
                         cs,
                         tt,
                         acc.lock && acms == acc.agentChatModels.last,
@@ -99,7 +99,7 @@ class _AgentChatViewState extends State<AgentChatView> {
                   ),
                 ),
                 child: Text(
-                  model.body ?? '',
+                  model.questionBody ?? '',
                   style: tt.bodyLarge?.copyWith(color: cs.onSurface),
                 ),
               ),
@@ -312,7 +312,7 @@ class _AgentChatViewState extends State<AgentChatView> {
                 constraints: BoxConstraints(maxWidth: 480),
                 padding: EdgeInsets.all(24),
                 child: Text(
-                  model.body ?? '',
+                  model.questionBody ?? '',
                   style: tt.bodyLarge?.copyWith(color: cs.onSurface),
                 ),
               ),

@@ -3,21 +3,27 @@ import 'package:lunarr/models/agent_card_model.dart';
 enum AgentChatType { question, selection, thinking, answer }
 
 class AgentChatModel {
-  final AgentChatType agentChatType;
-  final String? body;
-  final List<AgentCardModel>? agentCardModels;
+  final AgentChatType type;
+  final String? questionBody;
+  final List<AgentCardModel>? selectionBody;
+  final Object? thinkingBody;
+  final String? answerBody;
 
-  AgentChatModel.question(this.body)
-    : agentChatType = AgentChatType.question,
-      agentCardModels = null;
+  AgentChatModel.question(this.questionBody)
+    : type = AgentChatType.question,
+      selectionBody = null,
+      thinkingBody = null,
+      answerBody = null;
 
   static AgentChatModel questionExample() => AgentChatModel.question(
     'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
   );
 
-  AgentChatModel.selection(this.agentCardModels)
-    : agentChatType = AgentChatType.selection,
-      body = null;
+  AgentChatModel.selection(this.selectionBody)
+    : type = AgentChatType.selection,
+      questionBody = null,
+      thinkingBody = null,
+      answerBody = null;
 
   static AgentChatModel selectionExample() => AgentChatModel.selection([
     AgentCardModel.seungho(true),
@@ -26,16 +32,19 @@ class AgentChatModel {
     AgentCardModel.seungho(true),
   ]);
 
-  AgentChatModel.thinking()
-    : agentChatType = AgentChatType.thinking,
-      body = null,
-      agentCardModels = null;
+  AgentChatModel.thinking(this.thinkingBody)
+    : type = AgentChatType.thinking,
+      questionBody = null,
+      selectionBody = null,
+      answerBody = null;
 
-  static AgentChatModel thinkingExample() => AgentChatModel.thinking();
+  static AgentChatModel thinkingExample() => AgentChatModel.thinking(null);
 
-  AgentChatModel.answer(this.body)
-    : agentChatType = AgentChatType.answer,
-      agentCardModels = null;
+  AgentChatModel.answer(this.answerBody)
+    : type = AgentChatType.answer,
+      selectionBody = null,
+      questionBody = null,
+      thinkingBody = null;
 
   static AgentChatModel answerExample() => AgentChatModel.answer('''
 Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
