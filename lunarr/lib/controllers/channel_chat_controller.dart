@@ -1,26 +1,20 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:lunarr/models/agent_card_model.dart';
-import 'package:lunarr/models/channel_model.dart';
-import 'package:lunarr/services/channel_service.dart';
+import 'package:lunarr/models/channel_chat_model.dart';
 
 class ChannelChatController {
   bool _lock = false;
-  late List<List<AgentCardModel>> _agentCardModelss;
+  final List<ChannelChatModel> _channelChatModels = [];
   final TextEditingController _textEditingController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  String input = '';
   String _input = '';
 
   bool get lock => _lock;
-  List<List<AgentCardModel>> get agentCardModelss => _agentCardModelss;
+  List<ChannelChatModel> get channelChatModels => _channelChatModels;
   TextEditingController get textEditingController => _textEditingController;
   ScrollController get scrollController => _scrollController;
-  String get input => _input;
-
-  set input(String value) {
-    _input = value;
-  }
 
   void scroll() {
     Timer(const Duration(milliseconds: 300), () {
@@ -33,46 +27,55 @@ class ChannelChatController {
   }
 
   // TODO: integrate API (not for now)
-  Future<void> fetchAgentCardModels() async {
-    final ChannelModel cm = ChannelService().channelModel;
-
-    _agentCardModelss = [
-      [
-        AgentCardModel.seungho(false),
-        AgentCardModel.kyungho(true),
-        AgentCardModel.minseok(true),
-        AgentCardModel.seungho(true),
-      ],
-      [
-        AgentCardModel.seungho(true),
-        AgentCardModel.kyungho(false),
-        AgentCardModel.minseok(true),
-        AgentCardModel.seungho(true),
-      ],
-    ];
-  }
-
-  // TODO: integrate API
-  Future<void> getAgentCardModels() async {
-    if (_lock || input.isEmpty) return;
-    _lock = true;
-
-    List<AgentCardModel> agentCardModels = [
-      AgentCardModel.seungho(true),
-      AgentCardModel.kyungho(true),
-      AgentCardModel.minseok(true),
-      AgentCardModel.seungho(true),
+  Future<void> fetchChannelChatModels() async {
+    await Future.delayed(const Duration(seconds: 1));
+    List<ChannelChatModel> channelChatModels = [
+      ...ChannelChatModel.examples(),
+      ...ChannelChatModel.examples(),
+      ...ChannelChatModel.examples(),
+      ...ChannelChatModel.examples(),
     ];
 
-    _agentCardModelss.add(agentCardModels);
-
-    _input = '';
-    _textEditingController.clear();
+    _channelChatModels.addAll(channelChatModels);
     scroll();
   }
 
-  // TODO: integrate API using _agentCardModels
-  Future<void> getChannelChatModel() async {
+  void addQuestion() {
+    if (input.isEmpty) return;
+    _lock = true;
+
+    _input = input;
+    input = '';
+    _textEditingController.clear();
+
+    _channelChatModels.add(ChannelChatModel.question(_input));
+    scroll();
+  }
+
+  // TODO: integrate API
+  Future<void> addSelection() async {
+    await Future.delayed(const Duration(seconds: 1));
+    ChannelChatModel selection = ChannelChatModel.selectionExample();
+
+    _channelChatModels.add(selection);
+    scroll();
+  }
+
+  // TODO: integrate API (not for now)
+  Future<void> addThinking() async {
+    await Future.delayed(const Duration(seconds: 1));
+    ChannelChatModel thinking = ChannelChatModel.thinkingExample();
+
+    _channelChatModels.add(thinking);
+    scroll();
+  }
+
+  // TODO: integrate API
+  Future<void> addAnswer() async {
+    await Future.delayed(const Duration(seconds: 1));
+    ChannelChatModel answer = ChannelChatModel.answerExample();
+
+    _channelChatModels.add(answer);
     scroll();
 
     _lock = false;

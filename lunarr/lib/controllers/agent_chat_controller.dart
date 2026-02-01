@@ -1,73 +1,83 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:lunarr/models/agent_card_model.dart';
-import 'package:lunarr/models/agent_model.dart';
-import 'package:lunarr/services/agent_service.dart';
+import 'package:lunarr/models/agent_chat_model.dart';
 
 class AgentChatController {
   bool _lock = false;
-  late List<List<AgentCardModel>> _agentCardModelss;
+  final List<AgentChatModel> _agentChatModels = [];
   final TextEditingController _textEditingController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  String input = '';
   String _input = '';
 
   bool get lock => _lock;
-  List<List<AgentCardModel>> get agentCardModelss => _agentCardModelss;
+  List<AgentChatModel> get agentChatModels => _agentChatModels;
   TextEditingController get textEditingController => _textEditingController;
   ScrollController get scrollController => _scrollController;
-  String get input => _input;
-
-  set input(String value) {
-    _input = value;
-  }
 
   void scroll() {
-    _scrollController.animateTo(
-      _scrollController.position.maxScrollExtent,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
+    Timer(const Duration(milliseconds: 300), () {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   // TODO: integrate API (not for now)
-  Future<void> fetchAgentCardModels() async {
-    final AgentModel am = AgentService().agentModel;
-
-    _agentCardModelss = [
-      [
-        AgentCardModel.seungho(false),
-        AgentCardModel.kyungho(true),
-        AgentCardModel.minseok(true),
-        AgentCardModel.seungho(true),
-      ],
-      [
-        AgentCardModel.seungho(true),
-        AgentCardModel.kyungho(false),
-        AgentCardModel.minseok(true),
-        AgentCardModel.seungho(true),
-      ],
+  Future<void> fetchAgentChatModels() async {
+    await Future.delayed(const Duration(seconds: 1));
+    List<AgentChatModel> agentChatModels = [
+      ...AgentChatModel.examples(),
+      ...AgentChatModel.examples(),
+      ...AgentChatModel.examples(),
+      ...AgentChatModel.examples(),
     ];
+
+    _agentChatModels.addAll(agentChatModels);
+    scroll();
+  }
+
+  void addQuestion() {
+    if (input.isEmpty) return;
+    _lock = true;
+
+    _input = input;
+    input = '';
+    _textEditingController.clear();
+
+    _agentChatModels.add(AgentChatModel.question(_input));
+    scroll();
   }
 
   // TODO: integrate API
-  Future<void> getAgentCardModels() async {
-    if (_lock || input.isEmpty) return;
-    _lock = true;
+  Future<void> addSelection() async {
+    await Future.delayed(const Duration(seconds: 1));
+    AgentChatModel selection = AgentChatModel.selectionExample();
 
-    List<AgentCardModel> agentCardModels = [
-      AgentCardModel.seungho(true),
-      AgentCardModel.kyungho(true),
-      AgentCardModel.minseok(true),
-      AgentCardModel.seungho(true),
-    ];
-
-    _agentCardModelss.add(agentCardModels);
-
-    _input = '';
-    _textEditingController.clear();
+    _agentChatModels.add(selection);
+    scroll();
   }
 
-  // TODO: integrate API using _agentCardModels
-  Future<void> getAgentChatModel() async {
+  // TODO: integrate API (not for now)
+  Future<void> addThinking() async {
+    await Future.delayed(const Duration(seconds: 1));
+    AgentChatModel thinking = AgentChatModel.thinkingExample();
+
+    _agentChatModels.add(thinking);
+    scroll();
+  }
+
+  // TODO: integrate API
+  Future<void> addAnswer() async {
+    await Future.delayed(const Duration(seconds: 1));
+    AgentChatModel answer = AgentChatModel.answerExample();
+
+    _agentChatModels.add(answer);
+    scroll();
+
     _lock = false;
   }
 }

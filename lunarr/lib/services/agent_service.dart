@@ -21,9 +21,9 @@ class AgentService {
     WorkspaceService workspaceService = WorkspaceService();
 
     _agentModels = [
-      AgentModel('assets/avatars/1.png', 'Seungho\'s Agent'),
-      AgentModel('assets/avatars/2.png', 'Kyungho\'s Agent'),
-      AgentModel('assets/avatars/4.png', 'Minseok\'s Agent'),
+      AgentModel.seungho(),
+      AgentModel.kyungho(),
+      AgentModel.minseok(),
     ];
     fetchAgentModel(0);
   }

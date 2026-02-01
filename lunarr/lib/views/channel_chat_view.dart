@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lunarr/controllers/channel_chat_controller.dart';
 import 'package:lunarr/models/agent_card_model.dart';
+import 'package:lunarr/models/channel_chat_model.dart';
 import 'package:lunarr/models/channel_model.dart';
 import 'package:lunarr/services/channel_service.dart';
 import 'package:lunarr/widgets/agent_card_widget.dart';
@@ -20,7 +21,7 @@ class _ChannelChatViewState extends State<ChannelChatView> {
   @override
   void initState() {
     super.initState();
-    initFuture = ccc.fetchAgentCardModels();
+    initFuture = ccc.fetchChannelChatModels();
   }
 
   @override
@@ -30,10 +31,7 @@ class _ChannelChatViewState extends State<ChannelChatView> {
 
     return Stack(
       children: [
-        Column(
-          spacing: 24,
-          children: [_buildAppBar(tt, cs), _buildChat(cs, tt)],
-        ),
+        Column(children: [_buildAppBar(tt, cs), _buildChat(cs, tt)]),
         _buildGradient(cs),
         _buildInput(cs, tt),
       ],
@@ -50,19 +48,28 @@ class _ChannelChatViewState extends State<ChannelChatView> {
           }
           return SingleChildScrollView(
             controller: ccc.scrollController,
-            padding: const EdgeInsets.only(bottom: 200),
+            padding: EdgeInsets.only(bottom: 212, top: 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 24,
               children: [
-                ...ccc.agentCardModelss.map(
-                  (acms) => _buildAgentCards(
-                    acms,
-                    cs,
-                    tt,
-                    ccc.lock && acms == ccc.agentCardModelss.last,
-                  ),
-                ),
+                ...ccc.channelChatModels.map((ccms) {
+                  switch (ccms.channelChatType) {
+                    case ChannelChatType.question:
+                      return _buildQuestion(ccms, cs, tt);
+                    case ChannelChatType.selection:
+                      return _buildSelection(
+                        ccms.agentCardModels!,
+                        cs,
+                        tt,
+                        ccc.lock && ccms == ccc.channelChatModels.last,
+                      );
+                    case ChannelChatType.thinking:
+                      return _buildThinking(cs, tt);
+                    case ChannelChatType.answer:
+                      return _buildAnswer(ccms, cs, tt);
+                  }
+                }),
               ],
             ),
           );
@@ -71,120 +78,39 @@ class _ChannelChatViewState extends State<ChannelChatView> {
     );
   }
 
-  Widget _buildGradient(ColorScheme cs) {
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: Container(
-        height: 300,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.white.withAlpha(0), Colors.white, Colors.white],
-            stops: const [0.0, 0.8, 1.0],
+  Widget _buildQuestion(ChannelChatModel model, ColorScheme cs, TextTheme tt) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          constraints: BoxConstraints(maxWidth: 720),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Container(
+                constraints: BoxConstraints(maxWidth: 480),
+                padding: EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: cs.surface,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(24),
+                    bottomLeft: Radius.circular(24),
+                    bottomRight: Radius.circular(24),
+                  ),
+                ),
+                child: Text(
+                  model.body ?? '',
+                  style: tt.bodyLarge?.copyWith(color: cs.onSurface),
+                ),
+              ),
+            ],
           ),
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildInput(ColorScheme cs, TextTheme tt) {
-    final ChannelModel cm = ChannelService().channelModel;
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 12,
-          children: [
-            Card.outlined(
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(28),
-                side: BorderSide(color: cs.outline),
-              ),
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 720),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 16,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: ccc.textEditingController,
-                      onChanged: (value) {
-                        ccc.input = value;
-                      },
-                      decoration: InputDecoration(
-                        hintText: 'Ask ${cm.labelString}',
-                        hintStyle: tt.bodyLarge?.copyWith(
-                          color: cs.onSurfaceVariant,
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      style: tt.bodyLarge?.copyWith(color: cs.onSurface),
-                    ),
-                    SizedBox(
-                      height: 48,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              IconButton(
-                                onPressed: () {},
-                                icon: Icon(Icons.add, color: cs.onSurface),
-                              ),
-                              TextButton.icon(
-                                onPressed: () {},
-                                icon: Icon(Icons.tune, color: cs.onSurface),
-                                label: Text(
-                                  'Tools',
-                                  style: tt.labelLarge?.copyWith(
-                                    color: cs.onSurface,
-                                  ),
-                                ),
-                                style: TextButton.styleFrom(
-                                  foregroundColor: cs.onSurface,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          IconButton(
-                            onPressed: ccc.lock
-                                ? null
-                                : () async {
-                                    // TODO
-                                    await ccc.getAgentCardModels();
-                                    setState(() {});
-                                  },
-                            icon: Icon(Icons.send, color: cs.onSurface),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Text(
-              'Lunarr can make mistakes, including about people, so double-check it.',
-              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAgentCards(
+  Widget _buildSelection(
     List<AgentCardModel> acms,
     ColorScheme cs,
     TextTheme tt,
@@ -241,7 +167,10 @@ class _ChannelChatViewState extends State<ChannelChatView> {
                               deleteAreSelectedCount();
                               deleteIsConfirmed();
 
-                              await ccc.getChannelChatModel();
+                              await ccc.addThinking();
+                              setState(() {});
+
+                              await ccc.addAnswer();
                               setState(() {});
                             },
                       child: Text('Confirm'),
@@ -329,6 +258,194 @@ class _ChannelChatViewState extends State<ChannelChatView> {
         ],
       );
     }
+  }
+
+  Widget _buildThinking(ColorScheme cs, TextTheme tt) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          constraints: BoxConstraints(maxWidth: 720),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                constraints: BoxConstraints(maxWidth: 480),
+                padding: EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  spacing: 12,
+                  children: [
+                    CircleAvatar(radius: 12),
+                    Text(
+                      'Show Thinking',
+                      style: tt.labelLarge?.copyWith(color: cs.onSurface),
+                    ),
+                    IconButton(
+                      onPressed: () {},
+                      icon: Icon(Icons.arrow_drop_down),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAnswer(ChannelChatModel model, ColorScheme cs, TextTheme tt) {
+    final ChannelModel cm = ChannelService().channelModel;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          constraints: BoxConstraints(maxWidth: 720),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                constraints: BoxConstraints(maxWidth: 480),
+                padding: EdgeInsets.all(24),
+                child: Text(
+                  model.body ?? '',
+                  style: tt.bodyLarge?.copyWith(color: cs.onSurface),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGradient(ColorScheme cs) {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Container(
+        height: 320,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.white.withAlpha(0), Colors.white, Colors.white],
+            stops: [0.0, 0.75, 1.0],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInput(ColorScheme cs, TextTheme tt) {
+    final ChannelModel cm = ChannelService().channelModel;
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 12,
+          children: [
+            Card.outlined(
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28),
+                side: BorderSide(color: cs.outline),
+              ),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 720),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      onSubmitted: ccc.lock
+                          ? null
+                          : (_) async {
+                              ccc.addQuestion();
+                              setState(() {});
+
+                              await ccc.addSelection();
+                              setState(() {});
+                            },
+                      enabled: !ccc.lock,
+                      controller: ccc.textEditingController,
+                      onChanged: (value) {
+                        ccc.input = value;
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Ask ${cm.labelString}',
+                        hintStyle: tt.bodyLarge?.copyWith(
+                          color: cs.onSurfaceVariant,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      style: tt.bodyLarge?.copyWith(color: cs.onSurface),
+                    ),
+                    SizedBox(
+                      height: 48,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              IconButton(
+                                onPressed: () {},
+                                icon: Icon(Icons.add, color: cs.onSurface),
+                              ),
+                              TextButton.icon(
+                                onPressed: () {},
+                                icon: Icon(Icons.tune, color: cs.onSurface),
+                                label: Text(
+                                  'Tools',
+                                  style: tt.labelLarge?.copyWith(
+                                    color: cs.onSurface,
+                                  ),
+                                ),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: cs.onSurface,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          IconButton(
+                            onPressed: ccc.lock
+                                ? null
+                                : () async {
+                                    ccc.addQuestion();
+                                    setState(() {});
+
+                                    await ccc.addSelection();
+                                    setState(() {});
+                                  },
+                            icon: Icon(
+                              ccc.lock ? Icons.stop : Icons.send,
+                              color: cs.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Text(
+              'Lunarr can make mistakes, including about people, so double-check it.',
+              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildAppBar(TextTheme tt, ColorScheme cs) {

@@ -13,4 +13,10 @@ class ChannelModel {
     backgroundColor: Colors.transparent,
     child: Text('#'),
   );
+
+  static ChannelModel all() => ChannelModel('', 'All', 20);
+  static ChannelModel frontendTeam() => ChannelModel('', 'Frontend Team', 5);
+  static ChannelModel backendTeam() => ChannelModel('', 'Backend Team', 5);
+  static ChannelModel developers() => ChannelModel('', 'Developers', 10);
+  static ChannelModel lunchGroup() => ChannelModel('', 'Lunch Group', 3);
 }

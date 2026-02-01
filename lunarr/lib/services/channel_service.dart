@@ -21,12 +21,12 @@ class ChannelService {
     WorkspaceService workspaceService = WorkspaceService();
 
     _channelModels = [
-      'All',
-      'Frontend Team',
-      'Backend Team',
-      'Developers',
-      'Lunch Group',
-    ].map((labelString) => ChannelModel('', labelString, 10)).toList();
+      ChannelModel.all(),
+      ChannelModel.frontendTeam(),
+      ChannelModel.backendTeam(),
+      ChannelModel.developers(),
+      ChannelModel.lunchGroup(),
+    ];
 
     fetchChannelModel(0);
   }
