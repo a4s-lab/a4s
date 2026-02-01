@@ -1,6 +1,7 @@
 """Seed memories for all TechFlow Solutions agents via A4S API."""  # noqa: N999
 
 import json
+import time
 from pathlib import Path
 
 import httpx
@@ -43,8 +44,9 @@ def add_memory(
     requester_id: str,
     memory_data: dict,
     visibility: str,
+    max_retries: int = 5,
 ) -> dict:
-    """Add a single memory via API.
+    """Add a single memory via API with retry logic.
 
     Args:
         client: HTTP client.
@@ -52,6 +54,7 @@ def add_memory(
         requester_id: ID of requester (for access control).
         memory_data: Memory data with name, episode_body, knowledge_type.
         visibility: "private" or "public".
+        max_retries: Maximum number of retry attempts.
 
     Returns:
         API response.
@@ -74,13 +77,20 @@ def add_memory(
 
     headers = {"X-Requester-Id": requester_id}
 
-    response = client.post(f"{API_BASE_URL}/memories", json=payload, headers=headers)
-    response.raise_for_status()
+    last_exception = None
+    for _ in range(max_retries):
+        try:
+            response = client.post(f"{API_BASE_URL}/memories", json=payload, headers=headers)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            last_exception = e
+            time.sleep(10)
 
-    return response.json()
+    raise last_exception if last_exception else RuntimeError("Unexpected error in add_memory")
 
 
-def seed_agent_memories(client: httpx.Client, agent_id: str, agent_name: str) -> int:
+def seed_agent_memories(client: httpx.Client, agent_id: str, agent_name: str) -> tuple[int, int]:
     """Seed all memories for a single agent.
 
     Args:
@@ -89,14 +99,15 @@ def seed_agent_memories(client: httpx.Client, agent_id: str, agent_name: str) ->
         agent_name: Agent display name.
 
     Returns:
-        Number of memories seeded.
+        Tuple of (successful_count, failed_count).
     """
     seed_data = load_agent_seed_data(agent_name)
     if not seed_data:
         print(f"  ⊘ No seed data found for {agent_name}")
-        return 0
+        return 0, 0
 
-    memory_count = 0
+    private_memory_count = 0
+    public_memory_count = 0
 
     # Seed private memories (requester is the agent itself)
     private_memories = seed_data.get("private_memories", [])
@@ -109,9 +120,12 @@ def seed_agent_memories(client: httpx.Client, agent_id: str, agent_name: str) ->
                 memory_data=memory,
                 visibility="private",
             )
-            memory_count += 1
+            private_memory_count += 1
         except Exception as e:
             print(f"  ✗ Failed to add private memory '{memory.get('name')}': {e}")
+        finally:
+            # Add delay to allow LLM processing
+            time.sleep(10)
 
     # Seed public memories (requester is the agent itself)
     public_memories = seed_data.get("public_memories", [])
@@ -124,12 +138,21 @@ def seed_agent_memories(client: httpx.Client, agent_id: str, agent_name: str) ->
                 memory_data=memory,
                 visibility="public",
             )
-            memory_count += 1
+            public_memory_count += 1
         except Exception as e:
             print(f"  ✗ Failed to add public memory '{memory.get('name')}': {e}")
+        finally:
+            # Add delay to allow LLM processing
+            time.sleep(10)
 
-    print(f"  ✓ {agent_name}: {memory_count} memories ({len(private_memories)} private, {len(public_memories)} public)")
-    return memory_count
+    total_count = len(private_memories) + len(public_memories)
+    success_count = private_memory_count + public_memory_count
+    failed_count = total_count - success_count
+
+    print(f"{private_memory_count}/{len(private_memories)} private memories added.")
+    print(f"{public_memory_count}/{len(public_memories)} public memories added.")
+    print(f"{success_count}/{total_count} total memories added.")
+    return success_count, failed_count
 
 
 def main() -> None:
@@ -140,25 +163,35 @@ def main() -> None:
     print(f"Seeding memories for {len(registered_agents)} agents...")
     print()
 
-    total_memories = 0
+    total_success = 0
+    total_failed = 0
 
-    with httpx.Client(timeout=30.0) as client:
+    with httpx.Client(timeout=60.0) as client:
         for agent_id, agent_info in registered_agents.items():
             try:
-                count = seed_agent_memories(client, agent_id, agent_info["name"])
-                total_memories += count
+                print("=" * 60)
+                print(f"Seeding memories for agent '{agent_info['name']}' (ID: {agent_id})...")
+                print()
+                success_count, failed_count = seed_agent_memories(client, agent_id, agent_info["name"])
+                print()
+                print(f"Finished seeding for {agent_info['name']}: {success_count} succeeded, {failed_count} failed.")
+                print("=" * 60)
+                total_success += success_count
+                total_failed += failed_count
             except Exception as e:
                 print(f"  ✗ Error seeding memories for {agent_info['name']}: {e}")
                 continue
 
     print()
-    print(f"Successfully seeded {total_memories} total memories")
+    print(f"Success: {total_success}, Failed: {total_failed}, Total: {total_success + total_failed} memories")
     print()
     print("⏳ IMPORTANT: Memories are processed asynchronously by Graphiti.")
-    print("   Wait 2-3 minutes before starting agents to allow processing to complete.")
+    print("   Wait 3-5 minutes before starting agents to allow processing to complete.")
     print("   You can verify in FalkorDB:")
-    print("   docker exec -it a4s-memory falkordb-cli")
-    print('   GRAPH.QUERY graphiti "MATCH (n) RETURN count(n)"')
+    print("   docker exec a4s-a4s-memory-1 redis-cli GRAPH.QUERY graphiti 'MATCH (n) RETURN count(n)'")
+    print()
+    print("   Monitor processing in API logs:")
+    print("   docker logs -f a4s-a4s-api-1 | grep 'Error processing\\|Successfully'")
 
 
 if __name__ == "__main__":
