@@ -46,18 +46,18 @@ def search_memory(client: httpx.Client, requester_id: str, target_agent_id: str,
 def print_memory_results(memories: list, indent: str = "    ") -> None:
     """Pretty print memory search results."""
     for i, memory in enumerate(memories, 1):
-        metadata = memory.get("metadata", {})
-        score = memory.get("score", 0)
-        name = metadata.get("name", "N/A")
-        knowledge_type = metadata.get("knowledge_type", "N/A")
+        # metadata = memory.get("metadata", {})  # noqa: ERA001
+        # score = memory.get("score", 0) # noqa: ERA001
+        # name = metadata.get("name", "N/A") # noqa: ERA001
+        # knowledge_type = metadata.get("knowledge_type", "N/A") # noqa: ERA001
 
-        print(f"{indent}{i}. [{knowledge_type}] {name}")
-        print(f"{indent}   Score: {score:.2f}")
+        # print(f"{indent}{i}. [{knowledge_type}] {name}") # noqa: ERA001
+        # print(f"{indent}   Score: {score:.2f}") # noqa: ERA001
 
         # Print snippet of content
         content = memory.get("content", "")
         snippet = content[:120] + "..." if len(content) > 120 else content
-        print(f"{indent}   Content: {snippet}")
+        print(f"{indent}   {i}. {snippet}")
         print()
 
 
@@ -86,15 +86,15 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
     maya_id = None
 
     for agent_id, info in registered_agents.items():
-        if info["name"] == "Emily Wang":
+        if info["name"] == "emily-wang":
             emily_id = agent_id
-        elif info["name"] == "Olivia Taylor":
+        elif info["name"] == "olivia-taylor":
             olivia_id = agent_id
-        elif info["name"] == "Paul Anderson":
+        elif info["name"] == "paul-anderson":
             paul_id = agent_id
-        elif info["name"] == "Quinn Roberts":
+        elif info["name"] == "quinn-roberts":
             quinn_id = agent_id
-        elif info["name"] == "Maya Singh":
+        elif info["name"] == "maya-singh":
             maya_id = agent_id
 
     if not all([emily_id, olivia_id, paul_id, quinn_id, maya_id]):
