@@ -28,6 +28,7 @@ class Config(BaseSettings):
     # Backend
     cors_origins: list[str] = Field(default_factory=list)
     api_base_url: str = "http://localhost:8000"
+    agent_gateway_url: str = "http://localhost:8080"
     agent_network: str = "a4s-network"
 
     # Agent runtime

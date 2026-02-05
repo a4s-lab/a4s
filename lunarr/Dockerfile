@@ -7,7 +7,7 @@ RUN flutter pub get
 
 COPY . .
 
-ARG API_BASE_URL=http://localhost:8000
+ARG API_BASE_URL=http://localhost:8080
 
 RUN flutter build web --release \
     --dart-define=API_BASE_URL=$API_BASE_URL

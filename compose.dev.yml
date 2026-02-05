@@ -1,14 +1,28 @@
 services:
+  a4s-gateway:
+    image: nginx:1.27-alpine
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./nginx/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+    environment:
+      - A4S_API_URL=http://a4s-api:8000
+      - NGINX_ENVSUBST_FILTER=A4S_API_URL
+    depends_on:
+      - a4s-api
+    networks:
+      - a4s-network
+
   lunarr:
     build:
       context: ./lunarr
       dockerfile: Dockerfile
       args:
-        - API_BASE_URL=http://localhost:8000
+        - API_BASE_URL=http://localhost:8080
     ports:
       - "8081:80"
     depends_on:
-      - a4s-api
+      - a4s-gateway
     networks:
       - a4s-network
 
@@ -26,10 +40,11 @@ services:
       - api/.env
     environment:
       - API_BASE_URL=http://a4s-api:8000
+      - AGENT_GATEWAY_URL=http://a4s-gateway:8080
       - AGENT_NETWORK=a4s-network
       - QDRANT_URL=http://a4s-registry:6333
       - GRAPHITI_FALKORDB_HOST=a4s-memory
-      - 'CORS_ORIGINS=["http://localhost:3000", "http://localhost:5173", "http://localhost:8081"]'
+      - 'CORS_ORIGINS=["http://localhost:3000", "http://localhost:5173", "http://localhost:8080", "http://localhost:8081"]'
       - SKILLS_DB_PATH=/app/data/skills.db
       - CHANNEL_DB_PATH=/app/data/channels.db
     volumes:
