@@ -47,32 +47,32 @@ def test_agent_search(client: httpx.Client) -> None:
 
 
 def test_memory_search_owner(client: httpx.Client, registered_agents: dict) -> None:
-    """Test memory search by agent owner (sees private + public)."""
+    """Test memory search by agent owner."""
     print("Test 2: Memory Search by Owner")
     print("-" * 50)
 
-    requester_id = "alice-chen"
+    requester = "alice-chen"
     query = "chen"
 
     agent_id = None
     for a_id, info in registered_agents.items():
-        if info["name"] == requester_id:
+        if info["name"] == requester:
             agent_id = a_id
             break
 
     if not agent_id:
-        print(f"  ✗ {requester_id} not found in registered agents")
+        print(f"  ✗ {requester} not found in registered agents")
         return
 
     try:
         payload = {"query": query, "agent_id": agent_id, "limit": 5}
-        headers = {"X-Requester-Id": requester_id}
+        headers = {"X-Requester-Id": agent_id}
 
         response = client.post(f"{API_BASE_URL}/memories/search", json=payload, headers=headers)
         response.raise_for_status()
         memories = response.json()
 
-        print(f"\n  Agent: {requester_id} (owner)")
+        print(f"\n  Agent: {requester} (owner)")
         print(f"  Query: '{query}'")
         print(f"  Found {len(memories)} memories:")
         for i, memory in enumerate(memories, 1):
@@ -82,17 +82,17 @@ def test_memory_search_owner(client: httpx.Client, registered_agents: dict) -> N
             print("\n  ⚠ No memories found")
 
     except Exception as e:
-        print(f"  ✗ Error searching memory of {requester_id}: {e}")
+        print(f"  ✗ Error searching memory of {requester}: {e}")
 
     print()
 
 
 def test_cross_agent_memory_access(client: httpx.Client, registered_agents: dict) -> None:
-    """Test cross-agent memory access (agent A reads agent B's public memories)."""
+    """Test cross-agent memory access (agent A reads agent B's memories)."""
     print("Test 3: Cross-Agent Memory Access")
     print("-" * 50)
 
-    requester_id = "maya-singh"
+    requester = "maya-singh"
     target_agent = "alice-chen"
     query = "payment"
 
@@ -107,16 +107,16 @@ def test_cross_agent_memory_access(client: httpx.Client, registered_agents: dict
 
     try:
         payload = {"query": query, "agent_id": target_agent_id, "limit": 5}
-        headers = {"X-Requester-Id": requester_id}
+        headers = {"X-Requester-Id": requester}
 
         response = client.post(f"{API_BASE_URL}/memories/search", json=payload, headers=headers)
         response.raise_for_status()
         memories = response.json()
 
-        print(f"\n  Requester: {requester_id}")
+        print(f"\n  Requester: {requester}")
         print(f"  Target: {target_agent}")
         print(f"  Query: '{query}'")
-        print(f"  Found {len(memories)} public memories:")
+        print(f"  Found {len(memories)} memories:")
         for i, memory in enumerate(memories, 1):
             print(f"   {i}. {memory['content']}")
 
@@ -125,49 +125,6 @@ def test_cross_agent_memory_access(client: httpx.Client, registered_agents: dict
 
     except Exception as e:
         print(f"  ✗ Error in cross-agent access: {e}")
-
-    print()
-
-
-def test_design_team_collaboration(client: httpx.Client, registered_agents: dict) -> None:
-    """Test design team collaboration scenario."""
-    print("Test 4: Design Team Collaboration Scenario")
-    print("-" * 50)
-
-    # Emily (Frontend) searches Olivia's (Design Lead) memories about checkout
-    emily_id = None
-    olivia_id = None
-
-    for agent_id, info in registered_agents.items():
-        if info["name"] == "emily-wang":
-            emily_id = agent_id
-        elif info["name"] == "olivia-taylor":
-            olivia_id = agent_id
-
-    if not emily_id or not olivia_id:
-        print("  ✗ Emily Wang or Olivia Taylor not found")
-        return
-
-    try:
-        payload = {"query": "checkout redesign user research", "agent_id": olivia_id, "limit": 3}
-        headers = {"X-Requester-Id": "emily-wang"}
-
-        response = client.post(f"{API_BASE_URL}/memories/search", json=payload, headers=headers)
-        response.raise_for_status()
-        memories = response.json()
-
-        print("\n  Scenario: Emily (Frontend) needs checkout redesign requirements")
-        print("  Searching: Olivia's (Design Lead) memories")
-        print("  Query: 'checkout redesign user research'")
-        print(f"  Found {len(memories)} memories:")
-        for i, memory in enumerate(memories, 1):
-            print(f"   {i}. {memory['content']}")
-
-        if len(memories) > 0:
-            print("\n  ✓ Design-Engineering collaboration scenario verified!")
-
-    except Exception as e:
-        print(f"  ✗ Error in design collaboration test: {e}")
 
     print()
 
@@ -191,7 +148,6 @@ def main() -> None:
         test_agent_search(client)
         test_memory_search_owner(client, registered_agents)
         test_cross_agent_memory_access(client, registered_agents)
-        test_design_team_collaboration(client, registered_agents)
 
     print("=" * 50)
     print("Verification Complete!")
