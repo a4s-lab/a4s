@@ -33,8 +33,7 @@ def register_agent(client: httpx.Client, agent_data: dict) -> dict:
         "description": agent_data["description"],
         "version": "1.0.0",
         "port": 8000,
-        "owner_id": agent_data["id"],
-        "mode": "serverless",
+        "mode": "permanent",
         "spawn_config": agent_data["spawn_config"],
     }
 
