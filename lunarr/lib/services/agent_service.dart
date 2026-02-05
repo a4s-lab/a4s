@@ -8,7 +8,7 @@ import 'package:lunarr/models/agent_model.dart';
 
 const _baseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'http://localhost:8000',
+  defaultValue: 'http://localhost:8080',
 );
 
 class AgentService {
@@ -96,7 +96,7 @@ class AgentService {
 
   Future<String?> sendMessage(String agentId, String message) async {
     try {
-      final uri = Uri.parse('$_baseUrl/api/v1/agents/$agentId/proxy/');
+      final uri = Uri.parse('$_baseUrl/agents/$agentId/');
       final requestId = DateTime.now().microsecondsSinceEpoch.toString();
       final messageId = (DateTime.now().microsecondsSinceEpoch + 1).toString();
 

@@ -6,6 +6,8 @@ import logging
 import time
 from typing import TYPE_CHECKING
 
+import httpx
+
 from app.models import Agent, AgentMode, AgentStatus
 from app.runtime.activity_monitor import AgentActivityMonitor
 from app.runtime.exceptions import AgentNotFoundError
@@ -16,6 +18,9 @@ if TYPE_CHECKING:
     from app.runtime.manager import RuntimeManager
 
 logger = logging.getLogger(__name__)
+
+READINESS_TIMEOUT = 30.0
+READINESS_POLL_INTERVAL = 0.5
 
 
 class AgentScheduler:
@@ -81,10 +86,25 @@ class AgentScheduler:
             owner_id=agent.owner_id,
         )
         self._runtime.spawn_agent(spawn_request)
+        await self._wait_for_ready(agent.url)
         cold_start_ms = int((time.monotonic() - start_time) * 1000)
 
         logger.info("Cold started agent %s in %dms", agent_id, cold_start_ms)
         return agent, cold_start_ms
+
+    async def _wait_for_ready(self, agent_url: str) -> None:
+        """Poll agent until it responds or timeout."""
+        deadline = time.monotonic() + READINESS_TIMEOUT
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            while time.monotonic() < deadline:
+                try:
+                    resp = await client.get(agent_url)
+                    if resp.status_code < 500:
+                        return
+                except httpx.RequestError:
+                    pass
+                await asyncio.sleep(READINESS_POLL_INTERVAL)
+        logger.warning("Agent at %s did not become ready in time", agent_url)
 
     def record_activity(self, agent_id: str) -> None:
         """Record activity for idle tracking.
