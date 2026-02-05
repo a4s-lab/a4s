@@ -22,6 +22,16 @@
       "name": "Checkout Flow Test Plan",
       "episode_body": "E2E test scenarios for checkout: happy path (complete purchase), payment failure handling, form validation errors, session persistence, mobile responsive behavior, accessibility compliance. Testing across browsers: Chrome, Firefox, Safari. Mobile testing on iOS and Android.",
       "knowledge_type": "fact"
+    },
+    {
+      "name": "Payment Service Testing Gaps",
+      "episode_body": "Bob's duplicate charge fix on January 15 had adequate unit tests but we missed E2E testing for Redis failure scenarios. Need to add chaos engineering tests for: Redis unavailable, Redis restart during transaction, network partition between payment service and Redis. Adding these to test suite to prevent production incidents.",
+      "knowledge_type": "fact"
+    },
+    {
+      "name": "Saved Payment Methods Testing Scope",
+      "episode_body": "Testing scope for saved payment methods feature is medium complexity. Need to test: save/retrieve/delete payment method flows, expired card handling and refresh, multiple browsers and devices sync, security verification (no plaintext card data stored). Estimated 4 QA days. Can run in parallel with development using test-driven approach.",
+      "knowledge_type": "fact"
     }
   ]
 }

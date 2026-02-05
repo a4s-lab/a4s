@@ -27,6 +27,16 @@
       "name": "Payment Service Deployment Requirements",
       "episode_body": "Payment service needs: PostgreSQL database, Redis cache, Kafka connection, secrets (Stripe API key). Kubernetes deployment: 3 replicas, resource limits 2GB RAM/1 CPU, liveness/readiness probes on /health endpoint. Uses HPA to scale 2-10 replicas based on CPU >70%.",
       "knowledge_type": "fact"
+    },
+    {
+      "name": "Payment Migration DevOps Support",
+      "episode_body": "DevOps support for payment migration scheduled for January 28, 2026. On track with no blockers. Kubernetes setup includes: 3 node pools (system, app, data) with auto-scaling enabled (2-10 replicas), monitoring with Prometheus and Grafana, CI/CD pipeline using ArgoCD, blue-green deployment strategy. Staging environment complete. Production environment ready for deployment. Rollback plan documented and tested.",
+      "knowledge_type": "fact"
+    },
+    {
+      "name": "Redis Infrastructure",
+      "episode_body": "Redis is deployed as a StatefulSet in Kubernetes with persistent volumes. Current configuration: 8GB memory limit, 4GB reserved. Redis is a single point of failure for services using distributed locks and caching. Monitoring: alerts on memory usage >80%, pod restarts, connection errors. Common issue: OOM (out of memory) kills when memory limit is too low.",
+      "knowledge_type": "fact"
     }
   ]
 }

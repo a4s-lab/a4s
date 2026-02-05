@@ -25,7 +25,7 @@
     },
     {
       "name": "Payment Service Migration Project",
-      "episode_body": "Backend team is migrating the monolithic payment service to microservices architecture. Using event-driven patterns with Apache Kafka for inter-service communication. Target completion date: March 15, 2026. Current status: 40% complete as of January 2026.",
+      "episode_body": "Backend team is migrating the monolithic payment service to microservices architecture. Using event-driven patterns with Apache Kafka for inter-service communication. Target completion date: March 15, 2026. Current status: 40% complete as of January 2026. Architecture design complete with event-driven approach. Payment processing microservice deployed to staging. Refund service in development with Bob leading. Testing phase starts February 15. Risk: Need DevOps support for Kubernetes setup by February 1 - Henry's team is aware.",
       "knowledge_type": "fact"
     },
     {

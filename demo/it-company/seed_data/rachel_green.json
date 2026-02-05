@@ -22,6 +22,11 @@
       "name": "Brand Guidelines",
       "episode_body": "TechFlow brand values: innovative, reliable, customer-focused. Voice: professional but approachable, technical but clear. Visual identity: blue primary color (#007AFF), modern sans-serif typography (Inter), clean minimalist design. Used consistently across website, social media, email.",
       "knowledge_type": "fact"
+    },
+    {
+      "name": "Saved Payment Methods Customer Feedback",
+      "episode_body": "Customer feedback shows 64% of users want saved payment methods - this is the top feature request. Reduces checkout friction significantly. Industry benchmarks show saved payment methods increase conversion rate by approximately 15%. Competitive parity issue: competitors all have this feature. Marketing narrative: Perfect for Q1 launch with theme 'Faster, easier checkout'. Recommendation: Ship as soon as possible.",
+      "knowledge_type": "fact"
     }
   ]
 }
