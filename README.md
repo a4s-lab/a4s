@@ -5,9 +5,7 @@ A4S is an orchestration system for AI agents.
 - **Zero-code integration**: Any agent can join the A4S ecosystem without code or prompt modifications.
 - **Intelligent routing**: Agents can discover and collaborate with other agents based on their capabilities.
 
-## Usage
-
-### Docker Compose (recommended)
+## Quick Start
 
 ```bash
 make up
@@ -21,4 +19,10 @@ Ensure you have the following tools installed:
 
 ```bash
 make setup-dev
+```
+
+Run the development services:
+
+```bash
+make dev-up
 ```

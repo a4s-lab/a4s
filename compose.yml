@@ -1,0 +1,109 @@
+services:
+  a4s-gateway:
+    image: nginx:1.27-alpine
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./nginx/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+    environment:
+      - A4S_API_URL=http://a4s-api:8000
+      - NGINX_ENVSUBST_FILTER=A4S_API_URL
+    depends_on:
+      a4s-api:
+        condition: service_healthy
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - a4s-network
+
+  a4s-api:
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    user: root
+    env_file:
+      - api/.env
+    environment:
+      - API_BASE_URL=http://a4s-api:8000
+      - AGENT_GATEWAY_URL=http://a4s-gateway:8080
+      - AGENT_NETWORK=a4s-network
+      - QDRANT_URL=http://a4s-registry:6333
+      - GRAPHITI_FALKORDB_HOST=a4s-memory
+      - SKILLS_DB_PATH=/app/data/skills.db
+      - CHANNEL_DB_PATH=/app/data/channels.db
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - model-cache:/root/.cache
+      - api-data:/app/data
+    depends_on:
+      a4s-registry:
+        condition: service_healthy
+      a4s-memory:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/livez')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - a4s-network
+
+  a4s-registry:
+    image: qdrant/qdrant:v1.16
+    volumes:
+      - qdrant-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/6333 && echo -e 'GET /healthz HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 && grep -q 'HTTP/1.1 200' <&3"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - a4s-network
+
+  a4s-memory:
+    image: falkordb/falkordb:v4.16.0
+    volumes:
+      - falkordb-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - a4s-network
+
+networks:
+  a4s-network:
+    name: a4s-network
+
+volumes:
+  qdrant-data:
+  falkordb-data:
+  model-cache:
+  api-data:

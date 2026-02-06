@@ -18,22 +18,24 @@ lint: ## Check code with ruff
 setup-dev: ## Setup development environment
 	uv run pre-commit install
 
-##@ Docker
+##@ Docker (Development)
 
-.PHONY: up
-up: ## Start services
+.PHONY: dev-up
+dev-up: ## Start dev services
 	docker build -t a4s-personal-assistant:latest -f agents/personal-assistant/Dockerfile .
 	docker compose -f compose.dev.yml up -d
 
-.PHONY: down
-down: ## Stop services
+.PHONY: dev-down
+dev-down: ## Stop dev services
 	docker compose -f compose.dev.yml down
 
-.PHONY: deploy
-deploy: ## Deploy services
-	@echo ""
-	@echo "Services:"
-	@echo "  - Gateway: http://localhost:8080"
-	@echo "  - API: http://localhost:8000"
-	@echo "  - Qdrant: http://localhost:6333"
-	@echo "  - FalkorDB: http://localhost:6379"
+##@ Docker (Production)
+
+.PHONY: up
+up: ## Start production services
+	docker build -t a4s-personal-assistant:latest -f agents/personal-assistant/Dockerfile .
+	docker compose up -d --build
+
+.PHONY: down
+down: ## Stop production services
+	docker compose down
