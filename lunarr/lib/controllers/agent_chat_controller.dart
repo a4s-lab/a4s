@@ -6,6 +6,8 @@ import 'package:lunarr/models/agent_chat_model.dart';
 import 'package:lunarr/services/agent_service.dart';
 
 class AgentChatController {
+  AgentChatController({String? agentId}) : _selectedAgentId = agentId;
+
   bool _lock = false;
   final List<AgentChatModel> _agentChatModels = [];
   final TextEditingController _textEditingController = TextEditingController();

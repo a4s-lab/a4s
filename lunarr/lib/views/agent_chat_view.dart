@@ -8,22 +8,18 @@ import 'package:lunarr/services/agent_service.dart';
 import 'package:lunarr/widgets/agent_card_widget.dart';
 
 class AgentChatView extends StatefulWidget {
-  const AgentChatView({super.key});
+  final String agentId;
+
+  const AgentChatView({super.key, required this.agentId});
 
   @override
   State<AgentChatView> createState() => _AgentChatViewState();
 }
 
 class _AgentChatViewState extends State<AgentChatView> {
-  final AgentChatController acc = AgentChatController();
-
-  late Future<void> initFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    initFuture = acc.fetchAgentChatModels();
-  }
+  late final AgentChatController acc = AgentChatController(
+    agentId: widget.agentId,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -41,40 +37,32 @@ class _AgentChatViewState extends State<AgentChatView> {
 
   Expanded _buildChat(ColorScheme cs, TextTheme tt) {
     return Expanded(
-      child: FutureBuilder(
-        future: initFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
-          return SingleChildScrollView(
-            controller: acc.scrollController,
-            padding: EdgeInsets.only(bottom: 212, top: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 24,
-              children: [
-                ...acc.agentChatModels.map((acms) {
-                  switch (acms.type) {
-                    case AgentChatType.question:
-                      return _buildQuestion(acms.questionModel!, cs, tt);
-                    case AgentChatType.selection:
-                      return _buildSelection(
-                        acms.selectionModel!,
-                        cs,
-                        tt,
-                        acc.lock && acms == acc.agentChatModels.last,
-                      );
-                    case AgentChatType.thinking:
-                      return _buildThinking(acms.thinkingModel!, cs, tt);
-                    case AgentChatType.answer:
-                      return _buildAnswer(acms.answerModel!, cs, tt);
-                  }
-                }),
-              ],
-            ),
-          );
-        },
+      child: SingleChildScrollView(
+        controller: acc.scrollController,
+        padding: EdgeInsets.only(bottom: 212, top: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: 24,
+          children: [
+            ...acc.agentChatModels.map((acms) {
+              switch (acms.type) {
+                case AgentChatType.question:
+                  return _buildQuestion(acms.questionModel!, cs, tt);
+                case AgentChatType.selection:
+                  return _buildSelection(
+                    acms.selectionModel!,
+                    cs,
+                    tt,
+                    acc.lock && acms == acc.agentChatModels.last,
+                  );
+                case AgentChatType.thinking:
+                  return _buildThinking(acms.thinkingModel!, cs, tt);
+                case AgentChatType.answer:
+                  return _buildAnswer(acms.answerModel!, cs, tt);
+              }
+            }),
+          ],
+        ),
       ),
     );
   }
@@ -376,7 +364,7 @@ class _AgentChatViewState extends State<AgentChatView> {
                               acc.addQuestion();
                               setState(() {});
 
-                              await acc.addSelection();
+                              await acc.addAnswer();
                               setState(() {});
                             },
                       enabled: !acc.lock,
@@ -430,7 +418,7 @@ class _AgentChatViewState extends State<AgentChatView> {
                                     acc.addQuestion();
                                     setState(() {});
 
-                                    await acc.addSelection();
+                                    await acc.addAnswer();
                                     setState(() {});
                                   },
                             icon: Icon(
