@@ -109,9 +109,10 @@ async def send_a2a_message(  # noqa: C901
 
     timeout = httpx.Timeout(120.0, connect=10.0)
     async with httpx.AsyncClient(timeout=timeout) as http_client:
-        card_resp = await http_client.get(f"{agent_url}/.well-known/agent.json")
+        card_resp = await http_client.get(f"{agent_url.rstrip('/')}/.well-known/agent.json")
         card_resp.raise_for_status()
         agent_card = AgentCard.model_validate(card_resp.json())
+        agent_card.url = agent_url
         a2a_client = A2AClient(http_client, agent_card=agent_card)
 
         msg = Message(

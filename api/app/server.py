@@ -120,13 +120,12 @@ async def _ensure_backbone_agent(registry: QdrantAgentRegistry) -> None:
     except AgentNotRegisteredError:
         pass
 
-    container_name = f"a4s-agent-{agent_id}"
     agent = Agent(
         id=agent_id,
         name="backbone-router",
         description="Routes user messages to the most relevant agents in a channel",
         version="1.0.0",
-        url=f"http://{container_name}:8000",
+        url=f"{config.agent_gateway_url}/agents/{agent_id}/",
         port=8000,
         status=AgentStatus.PENDING,
         mode=AgentMode.PERMANENT,
