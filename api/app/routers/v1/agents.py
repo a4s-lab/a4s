@@ -71,7 +71,7 @@ async def register_agent(request: Request, body: RegisterAgentRequest) -> Agent:
 
     agent_id = generate_agent_id(body.name)
     # Auto-generate URL for managed agents; external agents provide their own
-    url = body.url if body.url else f"http://a4s-agent-{agent_id}:{body.port}"
+    url = body.url if body.url else f"{app_config.agent_gateway_url}/agents/{agent_id}/"
     agent = Agent(
         id=agent_id,
         name=body.name,

@@ -86,7 +86,8 @@ class AgentScheduler:
             mcp_tool_filter=agent.spawn_config.mcp_tool_filter,
         )
         self._runtime.spawn_agent(spawn_request)
-        await self._wait_for_ready(agent.url)
+        direct_url = f"http://{container_name}:{agent.port}"
+        await self._wait_for_ready(direct_url)
         cold_start_ms = int((time.monotonic() - start_time) * 1000)
 
         logger.info("Cold started agent %s in %dms", agent_id, cold_start_ms)
