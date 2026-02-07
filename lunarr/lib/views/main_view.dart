@@ -36,13 +36,12 @@ class _MainViewState extends State<MainView> {
             channelCount,
           ),
           Expanded(
-            child: IndexedStack(
-              index: _selectedIndex < channelCount ? 0 : 1,
-              children: [
-                ChannelChatView(key: ValueKey(_selectedIndex)),
-                AgentChatView(key: ValueKey(_selectedIndex - channelCount)),
-              ],
-            ),
+            child: _selectedIndex < channelCount
+                ? ChannelChatView(key: ValueKey(_selectedIndex))
+                : AgentChatView(
+                    key: ValueKey(_selectedIndex - channelCount),
+                    agentId: agentModels[_selectedIndex - channelCount].id,
+                  ),
           ),
         ],
       ),

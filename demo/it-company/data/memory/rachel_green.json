@@ -1,0 +1,30 @@
+{
+  "agent_id": "rachel-green",
+  "memories": [
+    {
+      "name": "Marketing Team Development",
+      "episode_body": "Sarah is excellent at content creation, Tom has strong social media instincts. Planning to expand team with performance marketing specialist in Q2. Focus on building brand awareness and lead generation.",
+      "knowledge_type": "preference"
+    },
+    {
+      "name": "Rachel Green - Marketing Manager",
+      "episode_body": "Rachel Green is Marketing Manager at TechFlow Solutions, leading the Marketing Team. Expert in marketing strategy, campaign execution, and brand positioning. 6 years marketing experience. Manages Sarah Miller (Content) and Tom Wilson (Social Media).",
+      "knowledge_type": "entity"
+    },
+    {
+      "name": "Q1 Marketing Campaigns",
+      "episode_body": "Q1 2026 campaigns: 1) Product launch campaign for improved checkout (email, social, blog), 2) Customer success stories (case studies), 3) SEO content strategy (technical blog posts). Goals: 20% increase in organic traffic, 15% improvement in conversion rate.",
+      "knowledge_type": "fact"
+    },
+    {
+      "name": "Brand Guidelines",
+      "episode_body": "TechFlow brand values: innovative, reliable, customer-focused. Voice: professional but approachable, technical but clear. Visual identity: blue primary color (#007AFF), modern sans-serif typography (Inter), clean minimalist design. Used consistently across website, social media, email.",
+      "knowledge_type": "fact"
+    },
+    {
+      "name": "Saved Payment Methods Customer Feedback",
+      "episode_body": "Customer feedback shows 64% of users want saved payment methods - this is the top feature request. Reduces checkout friction significantly. Industry benchmarks show saved payment methods increase conversion rate by approximately 15%. Competitive parity issue: competitors all have this feature. Marketing narrative: Perfect for Q1 launch with theme 'Faster, easier checkout'. Recommendation: Ship as soon as possible.",
+      "knowledge_type": "fact"
+    }
+  ]
+}
