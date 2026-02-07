@@ -138,6 +138,7 @@ class QdrantAgentRegistry(AgentRegistry):
         Raises:
             AgentNotRegisteredError: If the agent does not exist.
         """
+        await self._ensure_collection()
         results, _ = await self._client.scroll(
             collection_name=self._collection_name,
             scroll_filter=Filter(must=[FieldCondition(key="id", match=MatchValue(value=agent_id))]),
