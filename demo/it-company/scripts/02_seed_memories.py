@@ -112,7 +112,7 @@ def seed_agent_memories(client: httpx.Client, agent_id: str, agent_name: str) ->
             add_memory(
                 client,
                 agent_id=agent_id,
-                requester_id=agent_name,
+                requester_id=agent_id,
                 memory_data=memory,
             )
             success_count += 1
