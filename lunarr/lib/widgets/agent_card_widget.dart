@@ -49,10 +49,7 @@ class _AgentCardWidgetState extends State<AgentCardWidget> {
                     Row(
                       spacing: 12,
                       children: [
-                        CircleAvatar(
-                          radius: 20,
-                          child: Image.asset(widget.acm.iconString),
-                        ),
+                        widget.acm.getIcon(20),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [

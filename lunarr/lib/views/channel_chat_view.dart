@@ -292,12 +292,7 @@ class _ChannelChatViewState extends State<ChannelChatView> {
                 child: Row(
                   spacing: 12,
                   children: [
-                    ...tms.map(
-                      (tm) => CircleAvatar(
-                        radius: 12,
-                        child: Image.asset(tm.agentCardModel.iconString),
-                      ),
-                    ),
+                    ...tms.map((tm) => tm.agentCardModel.getIcon(12)),
                     Text(
                       'Show Thinking',
                       style: tt.labelLarge?.copyWith(
@@ -342,10 +337,7 @@ class _ChannelChatViewState extends State<ChannelChatView> {
                         Row(
                           spacing: 12,
                           children: [
-                            CircleAvatar(
-                              radius: 12,
-                              child: Image.asset(am.agentCardModel.iconString),
-                            ),
+                            am.agentCardModel.getIcon(12),
                             Text(
                               am.agentCardModel.name,
                               style: tt.labelLarge?.copyWith(

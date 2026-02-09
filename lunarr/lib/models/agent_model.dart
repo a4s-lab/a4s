@@ -10,7 +10,7 @@ class AgentModel {
   AgentModel(this.iconString, this.labelString, {this.id = '', this.agent});
 
   Widget getIcon(double radius) =>
-      CircleAvatar(radius: radius, child: Image.asset(iconString));
+      CircleAvatar(radius: radius, child: Text(agent!.name[0].toUpperCase()));
 
   factory AgentModel.fromAgent(Agent agent, {int avatarIndex = 1}) {
     return AgentModel(

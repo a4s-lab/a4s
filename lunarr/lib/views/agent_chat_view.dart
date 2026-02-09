@@ -105,10 +105,7 @@ class _AgentChatViewState extends State<AgentChatView> {
                 child: Row(
                   spacing: 12,
                   children: [
-                    CircleAvatar(
-                      radius: 12,
-                      child: Image.asset(AgentService().agentModel.iconString),
-                    ),
+                    tm.agentCardModel.getIcon(12),
                     Text(
                       'Show Thinking',
                       style: tt.labelLarge?.copyWith(
