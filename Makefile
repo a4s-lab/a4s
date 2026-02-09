@@ -23,7 +23,7 @@ setup-dev: ## Setup development environment
 .PHONY: dev-up
 dev-up: ## Start dev services
 	docker build -t a4s-personal-assistant:latest -f agents/personal-assistant/Dockerfile .
-	docker compose -f compose.dev.yml up -d
+	docker compose -f compose.dev.yml up -d --build
 
 .PHONY: dev-down
 dev-down: ## Stop dev services
