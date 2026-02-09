@@ -1,4 +1,5 @@
-import 'package:lunarr/models/agent.dart';
+import 'package:flutter/material.dart';
+import 'package:lunarr/models/agent_model.dart';
 
 class AgentCardModel {
   final String id;
@@ -25,20 +26,26 @@ class AgentCardModel {
     required this.isSelected,
   });
 
-  factory AgentCardModel.fromAgent(
-    Agent agent, {
+  Widget getIcon(double radius) => CircleAvatar(
+    radius: radius,
+    child: Text(name[0].toUpperCase(), style: TextStyle(fontSize: radius)),
+  );
+
+  factory AgentCardModel.fromAgentModel(
+    AgentModel am, {
     bool isSelected = false,
     int avatarIndex = 1,
   }) {
     return AgentCardModel(
-      id: agent.id,
+      id: am.id,
       iconString: 'assets/avatars/$avatarIndex.png',
-      name: agent.name,
-      distributionList: agent.id, // TODO: usage of distributionList must be discussed after removal of owner_id
-      description: agent.description,
-      instruction: agent.spawnConfig?.instruction ?? '',
-      model: agent.spawnConfig?.model.displayName ?? 'Unknown',
-      tools: agent.spawnConfig?.tools ?? [],
+      name: am.name,
+      distributionList: am
+          .id, // TODO: usage of distributionList must be discussed after removal of owner_id
+      description: am.description,
+      instruction: am.spawnConfig?.instruction ?? '',
+      model: am.spawnConfig?.model.displayName ?? 'Unknown',
+      tools: am.spawnConfig?.tools ?? [],
       knowledges: [],
       isSelected: isSelected,
     );

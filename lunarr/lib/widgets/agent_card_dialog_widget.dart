@@ -43,7 +43,7 @@ class AgentCardDialogWidget extends StatelessWidget {
         Row(
           spacing: 12,
           children: [
-            CircleAvatar(radius: 20, child: Image.asset(acm.iconString)),
+            acm.getIcon(20),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

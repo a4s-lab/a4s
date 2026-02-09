@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:lunarr/models/agent_card_model.dart';
 import 'package:lunarr/models/channel_chat_model.dart';
 import 'package:lunarr/models/channel_model.dart';
+import 'package:lunarr/services/agent_card_service.dart';
 import 'package:lunarr/services/channel_service.dart';
 
 class ChannelChatController {
@@ -12,6 +13,7 @@ class ChannelChatController {
   final TextEditingController _textEditingController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final ChannelService _channelService = ChannelService();
+
   String input = '';
   String _input = '';
   List<String> _selectedAgentIds = [];
@@ -31,18 +33,20 @@ class ChannelChatController {
     });
   }
 
+  // TODO
   Future<void> fetchChannelChatModels() async {
     await Future.delayed(const Duration(seconds: 1));
-    List<ChannelChatModel> channelChatModels = [
-      for (int i = 0; i < 4; i++)
-        ...ChannelChatModel.examples([
-          AgentCardModel.kyungho(false),
-          AgentCardModel.minseok(false),
-          AgentCardModel.seungho(false),
-        ]),
-    ];
 
-    _channelChatModels.addAll(channelChatModels);
+    // List<ChannelChatModel> channelChatModels = [
+    //   for (int i = 0; i < 4; i++)
+    //     ...ChannelChatModel.examples([
+    //       AgentCardModel.kyungho(false),
+    //       AgentCardModel.minseok(false),
+    //       AgentCardModel.seungho(false),
+    //     ]),
+    // ];
+    // _channelChatModels.addAll(channelChatModels);
+
     scroll();
   }
 
@@ -59,17 +63,17 @@ class ChannelChatController {
   }
 
   Future<void> addSelection() async {
-    final channel = _channelService.channelModel;
+    ChannelModel cm = _channelService.channelModel;
 
-    if (channel.id.isEmpty) {
+    if (cm.id.isEmpty) {
       _channelChatModels.add(ChannelChatModel.selectionExample());
       scroll();
       return;
     }
 
     final chatResponse = await _channelService.sendChannelMessage(
-      channel.id,
-      _input,
+      cm.id,
+      _getHistory(),
     );
 
     if (chatResponse == null) {
@@ -90,7 +94,7 @@ class ChannelChatController {
           .map(
             (c) => AgentCardModel(
               id: c.id,
-              iconString: 'assets/avatars/1.png',
+              iconString: '',
               name: c.name,
               distributionList: '',
               description: c.reason,
@@ -132,16 +136,19 @@ class ChannelChatController {
     _lock = false;
   }
 
+  // TODO
   Future<void> addThinkings() async {
-    List<AgentCardModel> agentCardModels = [
-      AgentCardModel.kyungho(false),
-      AgentCardModel.minseok(false),
-      AgentCardModel.seungho(false),
-    ];
-
     await Future.delayed(const Duration(seconds: 1));
-    ChannelChatModel thinking = ChannelChatModel.thinkingsExample(
-      agentCardModels,
+
+    List<AgentCardModel> acms = _selectedAgentIds
+        .map(
+          (id) => AgentCardModel.fromAgentModel(
+            AgentCardService().getAgentById(id)!,
+          ),
+        )
+        .toList();
+    ChannelChatModel thinking = ChannelChatModel.thinkings(
+      acms.map((acm) => (agentCardModel: acm, body: '')).toList(),
     );
 
     _channelChatModels.add(thinking);
@@ -158,7 +165,7 @@ class ChannelChatController {
     if (channel.id.isNotEmpty && _selectedAgentIds.isNotEmpty) {
       final chatResponse = await _channelService.sendChannelMessage(
         channel.id,
-        _input,
+        _getHistory(),
         agentIds: _selectedAgentIds,
       );
 
@@ -169,7 +176,7 @@ class ChannelChatController {
             .map(
               (r) => AgentCardModel(
                 id: r.agentId,
-                iconString: 'assets/avatars/1.png',
+                iconString: '',
                 name: r.agentName,
                 distributionList: '',
                 description: '',
@@ -216,5 +223,21 @@ class ChannelChatController {
 
     _lock = false;
     _selectedAgentIds = [];
+  }
+
+  String _getHistory() {
+    return _channelChatModels
+        .map(
+          (ccm) => switch (ccm.type) {
+            ChannelChatType.question => 'User: ${ccm.questionModel!.body}',
+            ChannelChatType.selection =>
+              'Selection: ${ccm.selectionModel!.body.map((acm) => acm.name).join(', ')}',
+            ChannelChatType.thinkings =>
+              'Thinking: ${ccm.thinkingModels!.map((tm) => tm.body).join(', ')}',
+            ChannelChatType.answers =>
+              'Assistant: ${ccm.answerModels!.map((am) => am.body).join(', ')}',
+          },
+        )
+        .join('\n');
   }
 }

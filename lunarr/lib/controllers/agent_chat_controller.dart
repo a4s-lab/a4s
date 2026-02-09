@@ -3,18 +3,17 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lunarr/models/agent_card_model.dart';
 import 'package:lunarr/models/agent_chat_model.dart';
-import 'package:lunarr/services/agent_service.dart';
+import 'package:lunarr/services/agent_card_service.dart';
 
 class AgentChatController {
-  AgentChatController({String? agentId}) : _selectedAgentId = agentId;
-
   bool _lock = false;
   final List<AgentChatModel> _agentChatModels = [];
   final TextEditingController _textEditingController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final AgentCardService _agentCardService = AgentCardService();
+
   String input = '';
   String _input = '';
-  String? _selectedAgentId;
 
   bool get lock => _lock;
   List<AgentChatModel> get agentChatModels => _agentChatModels;
@@ -31,16 +30,16 @@ class AgentChatController {
     });
   }
 
-  // TODO: integrate API (not for now)
+  // TODO
   Future<void> fetchAgentChatModels() async {
-    AgentCardModel agentCardModel = AgentCardModel.seungho(false);
-
     await Future.delayed(const Duration(seconds: 1));
-    List<AgentChatModel> agentChatModels = [
-      for (int i = 0; i < 4; i++) ...AgentChatModel.examples(agentCardModel),
-    ];
 
-    _agentChatModels.addAll(agentChatModels);
+    // AgentCardModel agentCardModel = AgentCardModel.seungho(false);
+    // List<AgentChatModel> agentChatModels = [
+    //   for (int i = 0; i < 4; i++) ...AgentChatModel.examples(agentCardModel),
+    // ];
+    // _agentChatModels.addAll(agentChatModels);
+
     scroll();
   }
 
@@ -56,81 +55,45 @@ class AgentChatController {
     scroll();
   }
 
-  Future<void> addSelection() async {
-    final agentService = AgentService();
-
-    var agents = await agentService.searchAgents(_input);
-    if (agents.isEmpty) {
-      agents = agentService.agents;
-    }
-
-    List<AgentCardModel> agentCards;
-    if (agents.isNotEmpty) {
-      agentCards = agents
-          .asMap()
-          .entries
-          .map(
-            (e) => AgentCardModel.fromAgent(
-              e.value,
-              isSelected: e.key == 0,
-              avatarIndex: (e.key % 30) + 1,
-            ),
-          )
-          .toList();
-      _selectedAgentId = agents.first.id;
-    } else {
-      agentCards = [
-        AgentCardModel.seungho(true),
-        AgentCardModel.kyungho(false),
-        AgentCardModel.minseok(false),
-      ];
-    }
-
-    _agentChatModels.add(AgentChatModel.selection((body: agentCards)));
-    scroll();
-  }
-
-  // TODO: integrate API (not for now)
+  // TODO
   Future<void> addThinking() async {
-    AgentCardModel agentCardModel = AgentCardModel.seungho(false);
-
     await Future.delayed(const Duration(seconds: 1));
-    AgentChatModel thinking = AgentChatModel.thinkingExample(agentCardModel);
+
+    AgentCardModel acm = _agentCardService.agentCardModel;
+    AgentChatModel thinking = AgentChatModel.thinking((
+      agentCardModel: acm,
+      body: '',
+    ));
 
     _agentChatModels.add(thinking);
     scroll();
   }
 
   Future<void> addAnswer() async {
-    final agentService = AgentService();
+    AgentCardModel acm = _agentCardService.agentCardModel;
 
-    AgentCardModel agentCardModel;
-    String? responseText;
-
-    if (_selectedAgentId != null) {
-      final agent = agentService.getAgentById(_selectedAgentId!);
-      if (agent != null) {
-        agentCardModel = AgentCardModel.fromAgent(agent, isSelected: false);
-        responseText = await agentService.sendMessage(
-          _selectedAgentId!,
-          _input,
-        );
-      } else {
-        agentCardModel = AgentCardModel.seungho(false);
-      }
-    } else {
-      agentCardModel = AgentCardModel.seungho(false);
-    }
-
-    final answerBody = responseText ?? 'Unable to get response from agent.';
-    final answer = AgentChatModel.answer((
-      agentCardModel: agentCardModel,
-      body: answerBody,
-    ));
-
-    _agentChatModels.add(answer);
+    _agentChatModels.add(
+      AgentChatModel.answer((
+        agentCardModel: acm,
+        body:
+            await _agentCardService.sendMessage(acm.id, _getHistory()) ??
+            'Unable to get response from agent.',
+      )),
+    );
     scroll();
 
     _lock = false;
+  }
+
+  String _getHistory() {
+    return _agentChatModels
+        .map(
+          (acm) => switch (acm.type) {
+            AgentChatType.question => 'User: ${acm.questionModel!.body}',
+            AgentChatType.thinking => 'Thinking: ${acm.thinkingModel!.body}',
+            AgentChatType.answer => 'Assistant: ${acm.answerModel!.body}',
+          },
+        )
+        .join('\n');
   }
 }

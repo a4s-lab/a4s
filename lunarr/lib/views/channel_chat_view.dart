@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:lunarr/controllers/channel_chat_controller.dart';
 import 'package:lunarr/models/agent_card_model.dart';
 import 'package:lunarr/models/channel_chat_model.dart';
@@ -224,6 +225,8 @@ class _ChannelChatViewState extends State<ChannelChatView> {
                           );
                         },
                       ),
+                    ] else ...[
+                      SizedBox(width: 356),
                     ],
                   ],
                 ),
@@ -259,6 +262,8 @@ class _ChannelChatViewState extends State<ChannelChatView> {
                     AgentCardWidget(acm: acms[i]),
                     if (i + 1 < acms.length) ...[
                       AgentCardWidget(acm: acms[i + 1]),
+                    ] else ...[
+                      SizedBox(width: 356),
                     ],
                   ],
                 ),
@@ -288,12 +293,7 @@ class _ChannelChatViewState extends State<ChannelChatView> {
                 child: Row(
                   spacing: 12,
                   children: [
-                    ...tms.map(
-                      (tm) => CircleAvatar(
-                        radius: 12,
-                        child: Image.asset(tm.agentCardModel.iconString),
-                      ),
-                    ),
+                    ...tms.map((tm) => tm.agentCardModel.getIcon(12)),
                     Text(
                       'Show Thinking',
                       style: tt.labelLarge?.copyWith(
@@ -315,12 +315,12 @@ class _ChannelChatViewState extends State<ChannelChatView> {
     );
   }
 
-  Widget _buildAnswers(List<AnswerModel> ams, ColorScheme cs, TextTheme tt) {
+  Widget _buildAnswers(List<AnswerModel> acms, ColorScheme cs, TextTheme tt) {
     final ChannelModel cm = ChannelService().channelModel;
 
     return Column(
       spacing: 24,
-      children: ams.map((am) {
+      children: acms.map((acm) {
         return Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -338,12 +338,9 @@ class _ChannelChatViewState extends State<ChannelChatView> {
                         Row(
                           spacing: 12,
                           children: [
-                            CircleAvatar(
-                              radius: 12,
-                              child: Image.asset(am.agentCardModel.iconString),
-                            ),
+                            acm.agentCardModel.getIcon(12),
                             Text(
-                              am.agentCardModel.name,
+                              acm.agentCardModel.name,
                               style: tt.labelLarge?.copyWith(
                                 color: cs.onSurface,
                                 fontWeight: FontWeight.bold,
@@ -351,10 +348,7 @@ class _ChannelChatViewState extends State<ChannelChatView> {
                             ),
                           ],
                         ),
-                        Text(
-                          am.body,
-                          style: tt.bodyLarge?.copyWith(color: cs.onSurface),
-                        ),
+                        MarkdownBody(data: acm.body),
                       ],
                     ),
                   ),
@@ -368,16 +362,18 @@ class _ChannelChatViewState extends State<ChannelChatView> {
   }
 
   Widget _buildGradient(ColorScheme cs) {
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: Container(
-        height: 320,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.white.withAlpha(0), Colors.white, Colors.white],
-            stops: [0.0, 0.75, 1.0],
+    return IgnorePointer(
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: Container(
+          height: 320,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.white.withAlpha(0), Colors.white, Colors.white],
+              stops: [0.0, 0.75, 1.0],
+            ),
           ),
         ),
       ),

@@ -32,7 +32,7 @@ class ChannelModel {
   Widget getIcon(double radius) => CircleAvatar(
     radius: radius,
     backgroundColor: Colors.transparent,
-    child: const Text('#'),
+    child: Text('#', style: TextStyle(fontSize: radius)),
   );
 
   static ChannelModel all() => ChannelModel(

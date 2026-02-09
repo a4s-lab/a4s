@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lunarr/constants/colors.dart';
 import 'package:lunarr/constants/texts.dart';
-import 'package:lunarr/services/agent_service.dart';
-import 'package:lunarr/services/channel_service.dart';
 import 'package:lunarr/utils/default_page_transitions_builder.dart';
-import 'package:lunarr/views/main_view.dart';
+import 'package:lunarr/views/sign_demo_view.dart';
 
-void main() async {
-  // TODO: remove (not for now)
-  await ChannelService().fetchChannelModels();
-  await AgentService().fetchAgentModels();
-
+void main() {
   runApp(const MyApp());
 }
 
@@ -49,8 +43,7 @@ class MyApp extends StatelessWidget {
           builders: {TargetPlatform.windows: DefaultPageTransitionsBuilder()},
         ),
       ),
-      // TODO: MainView -> SignView (not for now)
-      home: MainView(),
+      home: SignDemoView(),
     );
   }
 }
