@@ -1,6 +1,6 @@
 # E2E Tests
 
-End-to-end testing for A4S agent orchestration and A2A communication.
+End-to-end testing for Lunarr agent orchestration and A2A communication.
 
 ## Quick Start
 

@@ -9,10 +9,10 @@ resolution-markers = [
 
 [manifest]
 members = [
-    "a4s",
     "a4s-mcp",
     "api",
     "e2e",
+    "lunarr",
     "personal-assistant",
 ]
 
@@ -30,35 +30,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/92/a3/76f2d94a32a1b0dc760432d893a09ec5ed31de5ad51b1ef0f9d199ceb260/a2a_sdk-0.3.22.tar.gz", hash = "sha256:77a5694bfc4f26679c11b70c7f1062522206d430b34bc1215cfbb1eba67b7e7d", size = 231535, upload-time = "2025-12-16T18:39:21.19Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/64/e8/f4e39fd1cf0b3c4537b974637143f3ebfe1158dad7232d9eef15666a81ba/a2a_sdk-0.3.22-py3-none-any.whl", hash = "sha256:b98701135bb90b0ff85d35f31533b6b7a299bf810658c1c65f3814a6c15ea385", size = 144347, upload-time = "2025-12-16T18:39:19.218Z" },
-]
-
-[[package]]
-name = "a4s"
-version = "0.1.0"
-source = { virtual = "." }
-
-[package.dev-dependencies]
-dev = [
-    { name = "a4s-mcp" },
-    { name = "api" },
-    { name = "e2e" },
-    { name = "personal-assistant" },
-    { name = "pre-commit" },
-    { name = "pytest" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "a4s-mcp", editable = "mcp" },
-    { name = "api", editable = "api" },
-    { name = "e2e", editable = "e2e" },
-    { name = "personal-assistant", editable = "agents/personal-assistant" },
-    { name = "pre-commit", specifier = ">=4,<5" },
-    { name = "pytest", specifier = ">=9,<10" },
-    { name = "ruff", specifier = ">=0.14,<0.15" },
 ]
 
 [[package]]
@@ -1974,6 +1945,35 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/3a/05/a1dae3dffd1116099471c643b8924f5aa6524411dc6c63fdae648c4f1aca/loguru-0.7.3.tar.gz", hash = "sha256:19480589e77d47b8d85b2c827ad95d49bf31b0dcde16593892eb51dd18706eb6", size = 63559, upload-time = "2024-12-06T11:20:56.608Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0c/29/0348de65b8cc732daa3e33e67806420b2ae89bdce2b04af740289c5c6c8c/loguru-0.7.3-py3-none-any.whl", hash = "sha256:31a33c10c8e1e10422bfd431aeb5d351c7cf7fa671e3c4df004162264b28220c", size = 61595, upload-time = "2024-12-06T11:20:54.538Z" },
+]
+
+[[package]]
+name = "lunarr"
+version = "0.1.0"
+source = { virtual = "." }
+
+[package.dev-dependencies]
+dev = [
+    { name = "a4s-mcp" },
+    { name = "api" },
+    { name = "e2e" },
+    { name = "personal-assistant" },
+    { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "a4s-mcp", editable = "mcp" },
+    { name = "api", editable = "api" },
+    { name = "e2e", editable = "e2e" },
+    { name = "personal-assistant", editable = "agents/personal-assistant" },
+    { name = "pre-commit", specifier = ">=4,<5" },
+    { name = "pytest", specifier = ">=9,<10" },
+    { name = "ruff", specifier = ">=0.14,<0.15" },
 ]
 
 [[package]]

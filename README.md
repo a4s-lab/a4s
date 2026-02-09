@@ -1,9 +1,6 @@
-# A4S
+# Lunarr
 
-A4S is an orchestration system for AI agents.
-
-- **Zero-code integration**: Any agent can join the A4S ecosystem without code or prompt modifications.
-- **Intelligent routing**: Agents can discover and collaborate with other agents based on their capabilities.
+Lunarr provides your AI stand-in at work. Personal agents learn your context, answer on your behalf, and collaborate with each other so decisions never stall.
 
 ## Quick Start
 

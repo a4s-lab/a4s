@@ -1,7 +1,7 @@
 [project]
-name = "a4s"
+name = "lunarr"
 version = "0.1.0"
-description = "Orchestration system for AI agents."
+description = "Lunarr provides your AI stand-in at work. Personal agents learn your context, answer on your behalf, and collaborate with each other so decisions never stall."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = []
