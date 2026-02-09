@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:lunarr/controllers/agent_chat_controller.dart';
 import 'package:lunarr/models/agent_card_model.dart';
 import 'package:lunarr/models/agent_chat_model.dart';
@@ -151,10 +152,7 @@ class _AgentChatViewState extends State<AgentChatView> {
               Container(
                 constraints: BoxConstraints(maxWidth: 480),
                 padding: EdgeInsets.symmetric(horizontal: 24),
-                child: Text(
-                  am.body,
-                  style: tt.bodyLarge?.copyWith(color: cs.onSurface),
-                ),
+                child: MarkdownBody(data: am.body),
               ),
             ],
           ),

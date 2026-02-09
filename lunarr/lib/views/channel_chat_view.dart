@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:lunarr/controllers/channel_chat_controller.dart';
 import 'package:lunarr/models/agent_card_model.dart';
 import 'package:lunarr/models/channel_chat_model.dart';
@@ -347,10 +348,7 @@ class _ChannelChatViewState extends State<ChannelChatView> {
                             ),
                           ],
                         ),
-                        Text(
-                          acm.body,
-                          style: tt.bodyLarge?.copyWith(color: cs.onSurface),
-                        ),
+                        MarkdownBody(data: acm.body),
                       ],
                     ),
                   ),
