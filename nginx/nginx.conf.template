@@ -36,6 +36,14 @@ server {
         proxy_set_header X-Original-URI $request_uri;
     }
 
+    location /livez {
+        proxy_pass ${A4S_API_URL};
+    }
+
+    location /readyz {
+        proxy_pass ${A4S_API_URL};
+    }
+
     location /api/ {
         proxy_pass ${A4S_API_URL};
         proxy_set_header Host $host;

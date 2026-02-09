@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-API_URL="${API_URL:-http://localhost:8000}"
+API_URL="${API_URL:-http://localhost:8080}"
 IMAGE="${IMAGE:-a4s-personal-assistant:latest}"
 MODEL_PROVIDER="${MODEL_PROVIDER:-openrouter}"
 MODEL_ID="${MODEL_ID:-google/gemini-3-flash-preview}"
@@ -246,7 +246,7 @@ main() {
 
     if ! curl -sf "${API_URL}/livez" > /dev/null 2>&1; then
         log_err "API not available at ${API_URL}"
-        log_err "Start infrastructure first: docker compose -f compose.dev.yml up -d"
+        log_err "Start infrastructure first: docker compose up -d"
         exit 1
     fi
     log_ok "API is available"
