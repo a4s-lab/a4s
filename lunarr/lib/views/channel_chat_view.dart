@@ -224,6 +224,8 @@ class _ChannelChatViewState extends State<ChannelChatView> {
                           );
                         },
                       ),
+                    ] else ...[
+                      SizedBox(width: 356),
                     ],
                   ],
                 ),
@@ -259,6 +261,8 @@ class _ChannelChatViewState extends State<ChannelChatView> {
                     AgentCardWidget(acm: acms[i]),
                     if (i + 1 < acms.length) ...[
                       AgentCardWidget(acm: acms[i + 1]),
+                    ] else ...[
+                      SizedBox(width: 356),
                     ],
                   ],
                 ),
@@ -368,16 +372,18 @@ class _ChannelChatViewState extends State<ChannelChatView> {
   }
 
   Widget _buildGradient(ColorScheme cs) {
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: Container(
-        height: 320,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.white.withAlpha(0), Colors.white, Colors.white],
-            stops: [0.0, 0.75, 1.0],
+    return IgnorePointer(
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: Container(
+          height: 320,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.white.withAlpha(0), Colors.white, Colors.white],
+              stops: [0.0, 0.75, 1.0],
+            ),
           ),
         ),
       ),

@@ -1,7 +1,7 @@
 import 'package:lunarr/models/agent_card_model.dart';
 import 'package:lunarr/models/chat_model.dart';
 
-enum AgentChatType { question, selection, thinking, answer }
+enum AgentChatType { question, thinking, answer }
 
 class AgentChatModel {
   final AgentChatType type;

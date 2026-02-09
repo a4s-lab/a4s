@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lunarr/controllers/agent_chat_controller.dart';
-import 'package:lunarr/models/agent_card_model.dart';
 import 'package:lunarr/models/agent_chat_model.dart';
 import 'package:lunarr/models/agent_model.dart';
 import 'package:lunarr/models/chat_model.dart';
 import 'package:lunarr/services/agent_service.dart';
-import 'package:lunarr/widgets/agent_card_widget.dart';
 
 class AgentChatView extends StatefulWidget {
   final String agentId;
@@ -48,13 +46,6 @@ class _AgentChatViewState extends State<AgentChatView> {
               switch (acms.type) {
                 case AgentChatType.question:
                   return _buildQuestion(acms.questionModel!, cs, tt);
-                case AgentChatType.selection:
-                  return _buildSelection(
-                    acms.selectionModel!,
-                    cs,
-                    tt,
-                    acc.lock && acms == acc.agentChatModels.last,
-                  );
                 case AgentChatType.thinking:
                   return _buildThinking(acms.thinkingModel!, cs, tt);
                 case AgentChatType.answer:
@@ -97,158 +88,6 @@ class _AgentChatViewState extends State<AgentChatView> {
         ),
       ],
     );
-  }
-
-  Widget _buildSelection(
-    SelectionModel sm,
-    ColorScheme cs,
-    TextTheme tt,
-    bool enabled,
-  ) {
-    List<AgentCardModel> acms = sm.body;
-
-    if (enabled) {
-      final ValueNotifier<int> areSelectedCount = ValueNotifier<int>(0);
-
-      void updateAreSelectedCount() {
-        areSelectedCount.value = acms.where((e) => e.isSelected).length;
-      }
-
-      void deleteAreSelectedCount() {
-        areSelectedCount.dispose();
-      }
-
-      updateAreSelectedCount();
-
-      final ValueNotifier<bool> isConfirmed = ValueNotifier<bool>(false);
-
-      void updateIsConfirmed() {
-        isConfirmed.value = !isConfirmed.value;
-      }
-
-      void deleteIsConfirmed() {
-        isConfirmed.dispose();
-      }
-
-      return Column(
-        spacing: 24,
-        children: [
-          Container(
-            constraints: const BoxConstraints(maxWidth: 720),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                ValueListenableBuilder<int>(
-                  valueListenable: areSelectedCount,
-                  builder: (context, count, child) {
-                    return Text(
-                      '$count Agents Selected',
-                      style: tt.titleLarge?.copyWith(color: cs.onSurface),
-                    );
-                  },
-                ),
-                ValueListenableBuilder<bool>(
-                  valueListenable: isConfirmed,
-                  builder: (context, value, child) {
-                    return FilledButton(
-                      onPressed: isConfirmed.value
-                          ? null
-                          : () async {
-                              updateIsConfirmed();
-                              deleteAreSelectedCount();
-                              deleteIsConfirmed();
-
-                              await acc.addThinking();
-                              setState(() {});
-
-                              await acc.addAnswer();
-                              setState(() {});
-                            },
-                      child: Text('Confirm'),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-          Column(
-            spacing: 8,
-            children: [
-              for (int i = 0; i < acms.length; i += 2)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  spacing: 8,
-                  children: [
-                    ValueListenableBuilder<bool>(
-                      valueListenable: isConfirmed,
-                      builder: (context, value, child) {
-                        return AgentCardWidget(
-                          acm: acms[i],
-                          onTap: isConfirmed.value
-                              ? null
-                              : () {
-                                  updateAreSelectedCount();
-                                },
-                        );
-                      },
-                    ),
-                    if (i + 1 < acms.length) ...[
-                      ValueListenableBuilder<bool>(
-                        valueListenable: isConfirmed,
-                        builder: (context, value, child) {
-                          return AgentCardWidget(
-                            acm: acms[i + 1],
-                            onTap: isConfirmed.value
-                                ? null
-                                : () {
-                                    updateAreSelectedCount();
-                                  },
-                          );
-                        },
-                      ),
-                    ],
-                  ],
-                ),
-            ],
-          ),
-        ],
-      );
-    } else {
-      return Column(
-        spacing: 24,
-        children: [
-          Container(
-            constraints: const BoxConstraints(maxWidth: 720),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${acms.where((e) => e.isSelected).length} Agents Selected',
-                  style: tt.titleLarge?.copyWith(color: cs.onSurface),
-                ),
-                FilledButton(onPressed: null, child: Text('Confirm')),
-              ],
-            ),
-          ),
-          Column(
-            spacing: 8,
-            children: [
-              for (int i = 0; i < acms.length; i += 2)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  spacing: 8,
-                  children: [
-                    AgentCardWidget(acm: acms[i]),
-                    if (i + 1 < acms.length) ...[
-                      AgentCardWidget(acm: acms[i + 1]),
-                    ],
-                  ],
-                ),
-            ],
-          ),
-        ],
-      );
-    }
   }
 
   Widget _buildThinking(ThinkingModel tm, ColorScheme cs, TextTheme tt) {
@@ -316,16 +155,18 @@ class _AgentChatViewState extends State<AgentChatView> {
   }
 
   Widget _buildGradient(ColorScheme cs) {
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: Container(
-        height: 320,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.white.withAlpha(0), Colors.white, Colors.white],
-            stops: [0.0, 0.75, 1.0],
+    return IgnorePointer(
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: Container(
+          height: 320,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.white.withAlpha(0), Colors.white, Colors.white],
+              stops: [0.0, 0.75, 1.0],
+            ),
           ),
         ),
       ),
