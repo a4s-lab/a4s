@@ -26,8 +26,10 @@ class AgentCardModel {
     required this.isSelected,
   });
 
-  Widget getIcon(double radius) =>
-      CircleAvatar(radius: radius, child: Text(name[0].toUpperCase()));
+  Widget getIcon(double radius) => CircleAvatar(
+    radius: radius,
+    child: Text(name[0].toUpperCase(), style: TextStyle(fontSize: radius)),
+  );
 
   factory AgentCardModel.fromAgent(
     AgentModel agent, {

@@ -94,7 +94,10 @@ class _MainViewState extends State<MainView> {
               children: [
                 CircleAvatar(
                   radius: 16,
-                  child: Text(UserService().username![0].toUpperCase()),
+                  child: Text(
+                    UserService().username![0].toUpperCase(),
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
                 Text(
                   UserService().username!,
