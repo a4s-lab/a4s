@@ -39,7 +39,7 @@ class AgentCardService {
             .asMap()
             .entries
             .map(
-              (e) => AgentCardModel.fromAgent(
+              (e) => AgentCardModel.fromAgentModel(
                 e.value,
                 avatarIndex: (e.key % 30) + 1,
               ),
@@ -92,7 +92,7 @@ class AgentCardService {
 
   AgentCardModel getAgentCardModel(int index, {bool isSelected = false}) {
     if (index < _agents.length) {
-      return AgentCardModel.fromAgent(
+      return AgentCardModel.fromAgentModel(
         _agents[index],
         isSelected: isSelected,
         avatarIndex: (index % 30) + 1,

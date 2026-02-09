@@ -6,15 +6,14 @@ import 'package:lunarr/models/agent_chat_model.dart';
 import 'package:lunarr/services/agent_card_service.dart';
 
 class AgentChatController {
-  AgentChatController({String? agentId}) : _selectedAgentId = agentId;
-
   bool _lock = false;
   final List<AgentChatModel> _agentChatModels = [];
   final TextEditingController _textEditingController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final AgentCardService _agentCardService = AgentCardService();
+
   String input = '';
   String _input = '';
-  String? _selectedAgentId;
 
   bool get lock => _lock;
   List<AgentChatModel> get agentChatModels => _agentChatModels;
@@ -60,41 +59,27 @@ class AgentChatController {
   Future<void> addThinking() async {
     await Future.delayed(const Duration(seconds: 1));
 
-    AgentCardModel agentCardModel = AgentCardModel.seungho(false);
-    AgentChatModel thinking = AgentChatModel.thinkingExample(agentCardModel);
+    AgentCardModel acm = _agentCardService.agentCardModel;
+    AgentChatModel thinking = AgentChatModel.thinking((
+      agentCardModel: acm,
+      body: '',
+    ));
 
     _agentChatModels.add(thinking);
     scroll();
   }
 
   Future<void> addAnswer() async {
-    final agentService = AgentCardService();
+    AgentCardModel acm = _agentCardService.agentCardModel;
 
-    AgentCardModel agentCardModel;
-    String? responseText;
-
-    if (_selectedAgentId != null) {
-      final agent = agentService.getAgentById(_selectedAgentId!);
-      if (agent != null) {
-        agentCardModel = AgentCardModel.fromAgent(agent, isSelected: false);
-        responseText = await agentService.sendMessage(
-          _selectedAgentId!,
-          _input,
-        );
-      } else {
-        agentCardModel = AgentCardModel.seungho(false);
-      }
-    } else {
-      agentCardModel = AgentCardModel.seungho(false);
-    }
-
-    final answerBody = responseText ?? 'Unable to get response from agent.';
-    final answer = AgentChatModel.answer((
-      agentCardModel: agentCardModel,
-      body: answerBody,
-    ));
-
-    _agentChatModels.add(answer);
+    _agentChatModels.add(
+      AgentChatModel.answer((
+        agentCardModel: acm,
+        body:
+            await _agentCardService.sendMessage(acm.id, _input) ??
+            'Unable to get response from agent.',
+      )),
+    );
     scroll();
 
     _lock = false;

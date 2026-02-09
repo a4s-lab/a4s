@@ -212,6 +212,9 @@ class _AgentChatViewState extends State<AgentChatView> {
                               acc.addQuestion();
                               setState(() {});
 
+                              await acc.addThinking();
+                              setState(() {});
+
                               await acc.addAnswer();
                               setState(() {});
                             },
@@ -264,6 +267,9 @@ class _AgentChatViewState extends State<AgentChatView> {
                                 ? null
                                 : () async {
                                     acc.addQuestion();
+                                    setState(() {});
+
+                                    await acc.addThinking();
                                     setState(() {});
 
                                     await acc.addAnswer();

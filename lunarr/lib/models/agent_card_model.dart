@@ -31,21 +31,21 @@ class AgentCardModel {
     child: Text(name[0].toUpperCase(), style: TextStyle(fontSize: radius)),
   );
 
-  factory AgentCardModel.fromAgent(
-    AgentModel agent, {
+  factory AgentCardModel.fromAgentModel(
+    AgentModel am, {
     bool isSelected = false,
     int avatarIndex = 1,
   }) {
     return AgentCardModel(
-      id: agent.id,
+      id: am.id,
       iconString: 'assets/avatars/$avatarIndex.png',
-      name: agent.name,
-      distributionList: agent
+      name: am.name,
+      distributionList: am
           .id, // TODO: usage of distributionList must be discussed after removal of owner_id
-      description: agent.description,
-      instruction: agent.spawnConfig?.instruction ?? '',
-      model: agent.spawnConfig?.model.displayName ?? 'Unknown',
-      tools: agent.spawnConfig?.tools ?? [],
+      description: am.description,
+      instruction: am.spawnConfig?.instruction ?? '',
+      model: am.spawnConfig?.model.displayName ?? 'Unknown',
+      tools: am.spawnConfig?.tools ?? [],
       knowledges: [],
       isSelected: isSelected,
     );

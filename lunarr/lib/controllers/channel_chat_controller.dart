@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:lunarr/models/agent_card_model.dart';
 import 'package:lunarr/models/channel_chat_model.dart';
 import 'package:lunarr/models/channel_model.dart';
+import 'package:lunarr/services/agent_card_service.dart';
 import 'package:lunarr/services/channel_service.dart';
 
 class ChannelChatController {
@@ -12,6 +13,7 @@ class ChannelChatController {
   final TextEditingController _textEditingController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final ChannelService _channelService = ChannelService();
+
   String input = '';
   String _input = '';
   List<String> _selectedAgentIds = [];
@@ -61,16 +63,16 @@ class ChannelChatController {
   }
 
   Future<void> addSelection() async {
-    final channel = _channelService.channelModel;
+    ChannelModel cm = _channelService.channelModel;
 
-    if (channel.id.isEmpty) {
+    if (cm.id.isEmpty) {
       _channelChatModels.add(ChannelChatModel.selectionExample());
       scroll();
       return;
     }
 
     final chatResponse = await _channelService.sendChannelMessage(
-      channel.id,
+      cm.id,
       _input,
     );
 
@@ -92,7 +94,7 @@ class ChannelChatController {
           .map(
             (c) => AgentCardModel(
               id: c.id,
-              iconString: 'assets/avatars/1.png',
+              iconString: '',
               name: c.name,
               distributionList: '',
               description: c.reason,
@@ -134,16 +136,19 @@ class ChannelChatController {
     _lock = false;
   }
 
+  // TODO
   Future<void> addThinkings() async {
-    List<AgentCardModel> agentCardModels = [
-      AgentCardModel.kyungho(false),
-      AgentCardModel.minseok(false),
-      AgentCardModel.seungho(false),
-    ];
-
     await Future.delayed(const Duration(seconds: 1));
-    ChannelChatModel thinking = ChannelChatModel.thinkingsExample(
-      agentCardModels,
+
+    List<AgentCardModel> acms = _selectedAgentIds
+        .map(
+          (id) => AgentCardModel.fromAgentModel(
+            AgentCardService().getAgentById(id)!,
+          ),
+        )
+        .toList();
+    ChannelChatModel thinking = ChannelChatModel.thinkings(
+      acms.map((acm) => (agentCardModel: acm, body: '')).toList(),
     );
 
     _channelChatModels.add(thinking);
